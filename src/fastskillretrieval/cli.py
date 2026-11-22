@@ -94,7 +94,58 @@ def parser() -> argparse.ArgumentParser:
     return result
 
 
+def agent_parser() -> argparse.ArgumentParser:
+    result = argparse.ArgumentParser(
+        prog="fastskillretrieval",
+        description="Install into a coding agent and build its search index",
+    )
+    commands = result.add_subparsers(dest="command", required=True)
+    for name, text in (
+        ("install", "Register the prompt hook and the /fsr-init-index command"),
+        ("uninstall", "Remove only what install added"),
+        ("init-index", "Index every skill, subagent and command installed in the agent"),
+    ):
+        command = commands.add_parser(name, help=text)
+        command.add_argument("--agent", choices=["claude", "codex"], default="claude")
+        if name == "init-index":
+            command.add_argument(
+                "--project", type=Path, help="Also index this project's .claude/.codex"
+            )
+            command.add_argument(
+                "--if-stale",
+                action="store_true",
+                help="Skip the rebuild when installed skills/agents/commands are unchanged",
+            )
+    return result
+
+
+def agent_main(argv) -> int:
+    args = agent_parser().parse_args(argv)
+    if args.command == "install":
+        from .install_agent import install
+
+        result = install(args.agent)
+    elif args.command == "uninstall":
+        from .install_agent import uninstall
+
+        result = uninstall(args.agent)
+    else:
+        from .agent_index import init_index
+
+        result = init_index(
+            args.agent,
+            project=args.project,
+            log=lambda m: print(m, file=sys.stderr),
+            if_stale=args.if_stale,
+        )
+    sys.stdout.write(serialized(result) + "\n")
+    return 0
+
+
 def main(argv=None) -> int:
+    argv = sys.argv[1:] if argv is None else list(argv)
+    if argv and argv[0] in ("install", "uninstall", "init-index"):
+        return agent_main(argv)
     args = vars(parser().parse_args(argv))
     source, state = args.pop("source_root"), args.pop("state")
     session, config = args.pop("session"), args.pop("limits")

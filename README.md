@@ -59,6 +59,31 @@ uv run python -m fastskillretrieval --source-root examples/skills --state .fsr \
 The step-by-step walkthrough (inspect, submit, publish, search, load) is in the
 [full guide](doc/Guida_IT.md), currently written in Italian.
 
+## Use it with your coding agent (Claude Code, Codex)
+
+FastSkillRetrieval can index every skill, subagent and slash command you have installed and
+suggest the relevant ones **before** your request reaches the model, through a read-only
+`UserPromptSubmit` hook.
+
+```bash
+fastskillretrieval install --agent claude      # or: --agent codex
+fastskillretrieval init-index --agent claude   # or run /fsr-init-index inside the agent
+```
+
+- `install` merges a hook entry into `~/.claude/settings.json` (Codex: `~/.codex/hooks.json`)
+  and adds the `/fsr-init-index` command. It is idempotent, keeps a one-time `.fsr-backup` and
+  never touches entries it did not create. `uninstall` removes only its own. Codex requires you
+  to trust the new hook once from its `/hooks` screen.
+- `init-index` discovers user, project and plugin skills, agents and commands (disabled plugins
+  are skipped), stages copies under `~/.fsr/sources/<agent>/` and publishes the registry to
+  `~/.fsr/index/<agent>/`. No model is called. Add `--if-stale` to rebuild only when the installed
+  set changed. A full rebuild of about 570 items takes roughly three minutes.
+- The hook opens the registry read-only (about 1 to 4 ms) and adds the best matches as context.
+  `FSR_MODE=inject` (default), `suggest` (log only to `~/.fsr/suggestions.jsonl`) or `off`.
+  `FSR_HOME` moves the whole `~/.fsr` folder.
+
+Used by [Caronte](https://github.com/manuel-albanesee/Caronte), which installs it automatically.
+
 ## MCP server
 
 ```bash
@@ -99,7 +124,7 @@ uv run python -m pytest -q
 uv run ruff check src tests
 ```
 
-Current status: 330 passed, 1 skipped (the skipped test is platform-specific).
+Current status: 335 passed, 1 skipped (the skipped test is platform-specific).
 
 ## Project layout
 
@@ -122,4 +147,4 @@ permission enforcement, and automatic planner dispatch is deliberately absent. S
 
 ## License
 
-No license has been chosen yet. Until one is added, all rights are reserved.
+[MIT](LICENSE).

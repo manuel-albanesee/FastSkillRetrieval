@@ -7,6 +7,8 @@ name = "fastskillretrieval"
 version = "0.3.0"
 description = "Versioned local capability retrieval and deterministic planning, with a stdio MCP adapter"
 readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
 requires-python = ">=3.13,<3.14"
 dependencies = [
     "mcp==1.29.0",
@@ -22,6 +24,9 @@ fastskillretrieval-experiment = "fastskillretrieval.experiment_cli:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.setuptools.package-data]
+fastskillretrieval = ["assets/*.cjs"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
