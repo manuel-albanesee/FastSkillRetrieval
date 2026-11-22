@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://fastskillretrieval.local/schemas/reference-v2.schema.json",
+  "title": "FastSkillRetrieval capability reference v2",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "capability_id", "source_revision", "descriptor_revision", "catalog_id", "scope_id"],
+  "properties": {
+    "schema_version": {"const": 2},
+    "capability_id": {"type": "string", "minLength": 1},
+    "source_revision": {"type": "string", "minLength": 1},
+    "descriptor_revision": {"type": "string", "minLength": 1},
+    "catalog_id": {"type": "integer", "minimum": 1},
+    "scope_id": {"type": "string", "minLength": 1}
+  },
+  "$comment": "Registry resolution also requires the reference scope to equal the local registry scope, the tuple to be in a published catalog, and the capability to remain enabled. This schema does not establish any of those facts."
+}

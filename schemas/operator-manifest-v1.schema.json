@@ -1,0 +1,97 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://fastskillretrieval.local/schemas/operator-manifest-v1.schema.json",
+  "title": "FastSkillRetrieval operator manifest v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["kind", "name", "description_original"],
+  "properties": {
+    "schema_version": {"const": 1, "default": 1},
+    "kind": {"enum": ["skill", "subagent", "workflow", "command"]},
+    "name": {"type": "string", "minLength": 1, "maxLength": 128, "pattern": "\\S"},
+    "description_original": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 8000,
+      "pattern": "\\S"
+    },
+    "activation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["mode"],
+      "properties": {
+        "mode": {"enum": ["load", "dry_run", "invoke_native", "delegate", "orchestrate", "alias"]}
+      }
+    },
+    "requires": {"$ref": "#/$defs/capabilityIds"},
+    "preloads": {"$ref": "#/$defs/capabilityIds"},
+    "uses": {"$ref": "#/$defs/capabilityIds"},
+    "conflicts_with": {"$ref": "#/$defs/capabilityIds"},
+    "alias_of": {"type": "string", "minLength": 1, "maxLength": 256, "pattern": "\\S"},
+    "steps": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 32,
+      "items": {"$ref": "workflow-step-v1.schema.json"}
+    },
+    "definition": {"$ref": "#/$defs/definition"}
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"kind": {"const": "skill"}}},
+      "then": {"properties": {"activation": {"properties": {"mode": {"enum": ["load", "dry_run", "invoke_native"]}}}}}
+    },
+    {
+      "if": {"properties": {"kind": {"const": "subagent"}}},
+      "then": {"properties": {"activation": {"properties": {"mode": {"enum": ["dry_run", "delegate"]}}}}}
+    },
+    {
+      "if": {"properties": {"kind": {"const": "workflow"}}},
+      "then": {
+        "required": ["steps"],
+        "properties": {"activation": {"properties": {"mode": {"enum": ["dry_run", "orchestrate"]}}}}
+      }
+    },
+    {
+      "if": {"properties": {"kind": {"const": "command"}}},
+      "then": {
+        "required": ["alias_of"],
+        "properties": {"activation": {"properties": {"mode": {"const": "alias"}}}}
+      }
+    },
+    {
+      "if": {"properties": {"kind": {"enum": ["skill", "subagent", "command"]}}},
+      "then": {"not": {"required": ["steps"]}}
+    }
+  ],
+  "$defs": {
+    "capabilityIds": {
+      "type": "array",
+      "default": [],
+      "maxItems": 32,
+      "uniqueItems": true,
+      "items": {"type": "string", "minLength": 1, "maxLength": 256, "pattern": "\\S"}
+    },
+    "definition": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "body": {"type": "string"},
+        "frontmatter": {"$ref": "#/$defs/metadata"},
+        "metadata": {"$ref": "#/$defs/metadata"}
+      }
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": {"$ref": "#/$defs/definitionValue"}
+    },
+    "definitionValue": {
+      "anyOf": [
+        {"type": ["string", "number", "boolean", "null"]},
+        {"type": "array", "items": {"$ref": "#/$defs/definitionValue"}},
+        {"type": "object", "additionalProperties": {"$ref": "#/$defs/definitionValue"}}
+      ]
+    }
+  },
+  "$comment": "Omitted activation, relation arrays, and workflow-step defaults are supplied by validate_manifest; JSON Schema defaults are annotations and do not mutate input. The runtime also normalizes text, rejects NUL and authority/credential keys (including nested definition keys), bounds definition bytes/depth, checks native-skill preservation, and resolves relation IDs. A manifest is operator data, never a grant or execution authorization."
+}

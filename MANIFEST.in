@@ -1,0 +1,15 @@
+include README.md pyproject.toml uv.lock
+recursive-include src *.py
+recursive-include tests *.py
+recursive-include scripts *.py
+recursive-include examples *.md *.json
+recursive-include doc *.md *.json
+recursive-include plans *.md
+recursive-include schemas *.json
+include .claude/evals/capability-retrieval.md
+prune .work
+prune .venv
+prune .git
+prune .fsr
+global-exclude __pycache__ *.py[cod]
+global-exclude settings.local.json

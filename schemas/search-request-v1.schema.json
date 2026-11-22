@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://fastskillretrieval.local/schemas/search-request-v1.schema.json",
+  "title": "FastSkillRetrieval search request v1",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "query": {"type": "string", "maxLength": 4096, "default": ""},
+    "request_id": {"type": "string", "pattern": "^[A-Za-z0-9_-]{1,80}$"},
+    "kinds": {
+      "type": "array",
+      "items": {"enum": ["skill", "subagent", "workflow", "command"]}
+    },
+    "mode": {"enum": ["discovery", "prepare_use"], "default": "discovery"},
+    "task_revision": {"type": "integer", "minimum": 1, "default": 1},
+    "epoch": {"type": "integer"},
+    "limit": {"type": "integer", "minimum": 1, "maximum": 5, "default": 5},
+    "candidate_scan_limit": {"type": "integer", "minimum": 1, "maximum": 5000, "default": 100},
+    "explicit_id": {"type": "string"},
+    "technologies": {
+      "type": "array",
+      "maxItems": 32,
+      "items": {"enum": ["c", "cpp", "csharp", "python", "javascript", "typescript", "sqlite", "postgresql", "react", "nextjs", "cloudflare", "markdown", "json", "git", "c++", "c#", "js", "ts"]}
+    },
+    "exclude_ids": {
+      "type": "array",
+      "maxItems": 100,
+      "items": {"type": "string"}
+    }
+  },
+  "$comment": "This schema describes keyword arguments for Registry.call('search', ...); session_id is the separate call argument. The registry creates request_id when absent, uses the active request namespace when epoch is absent, normalizes technology aliases, validates a positive integer task_revision (booleans rejected), and enforces catalog, deadline, idempotency, budget, alias, dependency, conflict, and binding semantics."
+}

@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://fastskillretrieval.local/schemas/plan-response-v1.schema.json",
+  "title": "FastSkillRetrieval successful plan response v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["status", "plan_id", "actions", "main_estimate", "delegated_cost", "dry_run", "token_estimate"],
+  "properties": {
+    "status": {"const": "ok"},
+    "plan_id": {"type": "string", "pattern": "^[a-f0-9]{32}$"},
+    "actions": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/$defs/action"}
+    },
+    "main_estimate": {"type": "integer", "minimum": 0},
+    "delegated_cost": {"const": "unknown"},
+    "dry_run": {"type": "boolean"},
+    "token_estimate": {"const": "utf8_bytes_conservative"}
+  },
+  "$defs": {
+    "reference": {"$ref": "reference-v2.schema.json"},
+    "action": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["reference", "action", "target", "activation_allowed", "dry_run", "binding", "requires"],
+      "properties": {
+        "reference": {"$ref": "#/$defs/reference"},
+        "action": {"enum": ["load", "delegate", "orchestrate", "invoke_native"]},
+        "target": {"enum": ["main", "native_host"]},
+        "activation_allowed": {"type": "boolean"},
+        "dry_run": {"type": "boolean"},
+        "binding": {"enum": ["assisted_body_read", "unknown"]},
+        "requires": {"type": "array", "items": {"type": "string"}}
+      }
+    }
+  },
+  "$comment": "This is the successful Registry.call('plan', ...) envelope. Failure envelopes contain status and reason and are intentionally not represented here. The runtime computes estimates and dry_run after resolving published references, closure, conflicts, budgets, source integrity, policy, and binding observations; schema validity never proves an action is allowed or that a host executed it."
+}

@@ -1,0 +1,16 @@
+{
+  "description": "Review Markdown headings and relative links using a bundled document checklist.",
+  "aliases": ["markdown-review", "controllo-documentazione"],
+  "capabilities": [{
+    "action": "Review",
+    "object": "Markdown headings and links",
+    "scope": "local documentation",
+    "evidence": {
+      "file": "SKILL.md",
+      "quote": "Review Markdown headings and links using the bundled checklist."
+    }
+  }],
+  "use_when": ["Review Markdown documentation", "Controllare titoli e collegamenti Markdown"],
+  "exclusions": ["deployment"],
+  "technologies": ["markdown"]
+}

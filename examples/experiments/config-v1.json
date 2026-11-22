@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "status": "review_template_not_runtime_configuration",
+  "corpus_bundle": "ECC-2.2.3",
+  "retrieval": {
+    "max_results": 5,
+    "feedback": false
+  },
+  "group_assignment": {
+    "development": "first_16_authored_groups",
+    "holdout": "last_8_authored_groups",
+    "pilot": "three_separate_groups"
+  },
+  "holdout_policy": "public_reviewable_no_tuning_no_generalization_claim",
+  "task_boundary": "declarative_only_no_filesystem_or_network_execution",
+  "client_pins": "replace_protocol_placeholders_before_human_authorization"
+}

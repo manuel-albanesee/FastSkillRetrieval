@@ -1,0 +1,35 @@
+{
+  "version": "0.3.0",
+  "date": "2026-10-18",
+  "local_verification": {
+    "pytest": {"passed": 198, "skipped": 1, "coverage_percent": 86},
+    "quality": ["ruff check src tests scripts", "ruff format --check src tests scripts"],
+    "mcp_source_smoke": ["legacy: 8 tools", "registry: 17 tools"]
+  },
+  "host_observations": {
+    "claude_code_version": "2.1.302",
+    "registry_mcp_sessions": 3,
+    "registry_mcp_calls": 27,
+    "native_operator_runs": 3,
+    "native_lifecycle_receipts": 3,
+    "preload_generalized": "not_verified",
+    "tool_permission_enforcement": "unknown",
+    "automatic_registry_dispatch": "not_implemented"
+  },
+  "ingestion_benchmark": {
+    "fixture_size": 5000,
+    "publication": "completed by explicit resume after bounded batch timeout",
+    "publish_batch_size": 10,
+    "search_samples": 100,
+    "search_p50_ms": 32.72355,
+    "search_p95_ms": 64.9072,
+    "search_max_ms": 124.1993,
+    "llm_used": false
+  },
+  "context_and_evaluation": {
+    "real_corpus_skills": 100,
+    "context_observation": "local native-client observation only; no skill-token or reduction claim",
+    "proposal_100_20": "prepared; human approval and review still required",
+    "ab_c_evaluation": "not_run"
+  }
+}

@@ -1,0 +1,51 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://fastskillretrieval.local/schemas/workflow-step-v1.schema.json",
+  "title": "FastSkillRetrieval workflow step v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["id", "capability", "action"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256,
+      "pattern": "\\S"
+    },
+    "capability": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256,
+      "pattern": "\\S"
+    },
+    "action": {
+      "enum": ["load", "delegate", "orchestrate", "dry_run"]
+    },
+    "depends_on": {
+      "type": "array",
+      "default": [],
+      "maxItems": 32,
+      "uniqueItems": true,
+      "items": {"type": "string", "minLength": 1, "maxLength": 256, "pattern": "\\S"}
+    },
+    "inputs": {
+      "type": "array",
+      "default": [],
+      "maxItems": 32,
+      "uniqueItems": true,
+      "items": {"type": "string", "minLength": 1, "maxLength": 256, "pattern": "\\S"}
+    },
+    "outputs": {
+      "type": "array",
+      "default": [],
+      "maxItems": 32,
+      "uniqueItems": true,
+      "items": {"type": "string", "minLength": 1, "maxLength": 256, "pattern": "\\S"}
+    },
+    "on_error": {
+      "const": "stop",
+      "default": "stop"
+    }
+  },
+  "$comment": "The runtime additionally checks normalized duplicate IDs, dependencies that name a declared step, and acyclicity. A valid step is declarative data and does not authorize execution."
+}

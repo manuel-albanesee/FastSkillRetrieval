@@ -1,0 +1,63 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1110" viewBox="0 0 1600 1110">
+<style>text { font-family: Segoe UI, Arial, sans-serif; } .caption { font-size: 18px; fill: #475569; }</style>
+<rect width="1600" height="1110" fill="#f8fafc"/>
+<text x="80.0" y="72.0" font-size="38" fill="#0f172a" text-anchor="start">FastSkillRetrieval — confronto evidenze v0.2 → v0.3</text>
+<text x="80.0" y="108.0" font-size="20" fill="#475569" text-anchor="start">Le barre confrontano soltanto misure registrate. I pannelli mantengono unità diverse separate.</text>
+<rect x="70.0" y="145.0" width="710.0" height="420.0" fill="#ffffff" rx="4"/>
+<rect x="820.0" y="145.0" width="710.0" height="420.0" fill="#ffffff" rx="4"/>
+<rect x="70.0" y="605.0" width="1460.0" height="410.0" fill="#ffffff" rx="4"/>
+<text x="100.0" y="190.0" font-size="28" fill="#0f172a" text-anchor="start">Ampiezza delle verifiche</text>
+<text x="850.0" y="190.0" font-size="28" fill="#0f172a" text-anchor="start">Copertura e maturità del corpus</text>
+<text x="100.0" y="650.0" font-size="28" fill="#0f172a" text-anchor="start">Latenza di retrieval a 5.000 capability</text>
+<text x="100.0" y="682.0" font-size="18" fill="#9f1239" text-anchor="start">Misure non equivalenti: v0.2 usa fixture SQL riusata; v0.3 include ingestion/pubblicazione reale e ripresa.</text>
+<rect x="100" y="215" width="18" height="18" fill="#64748b" rx="3"/><text x="128" y="231" class="caption">v0.2</text>
+<rect x="210" y="215" width="18" height="18" fill="#0f766e" rx="3"/><text x="238" y="231" class="caption">v0.3</text>
+<text x="100.0" y="273.0" font-size="21" fill="#172033" text-anchor="start">Test automatici superati</text>
+<rect x="100.0" y="285.0" width="366.4" height="20.0" fill="#64748b" rx="4"/>
+<rect x="100.0" y="314.0" width="468.0" height="20.0" fill="#0f766e" rx="4"/>
+<text x="638.0" y="302.0" font-size="19" fill="#475569" text-anchor="start">v0.2  155</text>
+<text x="638.0" y="331.0" font-size="19" fill="#0f766e" text-anchor="start">v0.3  198</text>
+<text x="100.0" y="373.0" font-size="21" fill="#172033" text-anchor="start">Chiamate MCP host osservate</text>
+<rect x="100.0" y="385.0" width="104.0" height="20.0" fill="#64748b" rx="4"/>
+<rect x="100.0" y="414.0" width="468.0" height="20.0" fill="#0f766e" rx="4"/>
+<text x="638.0" y="402.0" font-size="19" fill="#475569" text-anchor="start">v0.2  6</text>
+<text x="638.0" y="431.0" font-size="19" fill="#0f766e" text-anchor="start">v0.3  27</text>
+<text x="100.0" y="473.0" font-size="21" fill="#172033" text-anchor="start">Esecuzioni native con receipt</text>
+<rect x="100.0" y="485.0" width="130.0" height="20.0" fill="#64748b" rx="4"/>
+<rect x="100.0" y="514.0" width="390.0" height="20.0" fill="#0f766e" rx="4"/>
+<text x="638.0" y="502.0" font-size="19" fill="#475569" text-anchor="start">v0.2  1</text>
+<text x="638.0" y="531.0" font-size="19" fill="#0f766e" text-anchor="start">v0.3  3</text>
+<text x="850.0" y="273.0" font-size="21" fill="#172033" text-anchor="start">Copertura istruzioni</text>
+<rect x="850.0" y="285.0" width="453.4" height="20.0" fill="#64748b" rx="4"/>
+<rect x="850.0" y="314.0" width="447.2" height="20.0" fill="#0f766e" rx="4"/>
+<text x="1388.0" y="302.0" font-size="19" fill="#475569" text-anchor="start">v0.2  87.2012%</text>
+<text x="1388.0" y="331.0" font-size="19" fill="#0f766e" text-anchor="start">v0.3  86%</text>
+<text x="850.0" y="373.0" font-size="21" fill="#172033" text-anchor="start">Corpus reale preparato per eval</text>
+<rect x="850.0" y="385.0" width="0.0" height="20.0" fill="#64748b" rx="4"/>
+<rect x="850.0" y="414.0" width="472.7" height="20.0" fill="#0f766e" rx="4"/>
+<text x="1388.0" y="402.0" font-size="19" fill="#475569" text-anchor="start">v0.2  0 skill</text>
+<text x="1388.0" y="431.0" font-size="19" fill="#0f766e" text-anchor="start">v0.3  100 skill</text>
+<text x="850.0" y="490.0" font-size="21" fill="#172033" text-anchor="start">A/B/C con giudizio umano</text>
+<text x="850.0" y="525.0" font-size="20" fill="#9f1239" text-anchor="start">v0.2: non avviato     v0.3: non avviato (approvazione richiesta)</text>
+<text x="850.0" y="555.0" font-size="18" fill="#475569" text-anchor="start">Non esiste quindi una misura comparabile di pertinenza per skill o subagent.</text>
+<text x="100.0" y="733.0" font-size="21" fill="#172033" text-anchor="start">p50 (ms)</text>
+<rect x="100.0" y="745.0" width="120.2" height="20.0" fill="#64748b" rx="4"/>
+<rect x="100.0" y="774.0" width="126.0" height="20.0" fill="#0f766e" rx="4"/>
+<text x="638.0" y="762.0" font-size="19" fill="#475569" text-anchor="start">v0.2  31.2075 ms</text>
+<text x="638.0" y="791.0" font-size="19" fill="#0f766e" text-anchor="start">v0.3  32.7236 ms</text>
+<text x="1250.0" y="777.0" font-size="20" fill="#9f1239" text-anchor="start">Δ +4.9%</text>
+<text x="100.0" y="813.0" font-size="21" fill="#172033" text-anchor="start">p95 (ms)</text>
+<rect x="100.0" y="825.0" width="137.1" height="20.0" fill="#64748b" rx="4"/>
+<rect x="100.0" y="854.0" width="250.0" height="20.0" fill="#0f766e" rx="4"/>
+<text x="638.0" y="842.0" font-size="19" fill="#475569" text-anchor="start">v0.2  35.5995 ms</text>
+<text x="638.0" y="871.0" font-size="19" fill="#0f766e" text-anchor="start">v0.3  64.9072 ms</text>
+<text x="1250.0" y="857.0" font-size="20" fill="#9f1239" text-anchor="start">Δ +82.3%</text>
+<text x="100.0" y="893.0" font-size="21" fill="#172033" text-anchor="start">massimo (ms)</text>
+<rect x="100.0" y="905.0" width="192.5" height="20.0" fill="#64748b" rx="4"/>
+<rect x="100.0" y="934.0" width="478.4" height="20.0" fill="#0f766e" rx="4"/>
+<text x="638.0" y="922.0" font-size="19" fill="#475569" text-anchor="start">v0.2  49.9772 ms</text>
+<text x="638.0" y="951.0" font-size="19" fill="#0f766e" text-anchor="start">v0.3  124.199 ms</text>
+<text x="1250.0" y="937.0" font-size="20" fill="#9f1239" text-anchor="start">Δ +148.5%</text>
+<text x="100.0" y="1038.0" font-size="20" fill="#0f172a" text-anchor="start">Lettura corretta: la robustezza verificata cresce (test, sessioni MCP e receipt); il nuovo benchmark non dimostra un guadagno di latenza.</text>
+<text x="100.0" y="1072.0" font-size="17" fill="#475569" text-anchor="start">Fonti: doc/Capability_Verifica.json e doc/Capability_Verifica_v0.3.json. Generato il 19 ottobre 2026.</text>
+</svg>

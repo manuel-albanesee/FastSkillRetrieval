@@ -1,0 +1,195 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "trial_id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]{0,127}$"
+    },
+    "case_id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]{0,127}$"
+    },
+    "arm": {
+      "enum": [
+        "A_NATIVE",
+        "B_CURATED",
+        "C_FSR"
+      ]
+    },
+    "repetition": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "attempt": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "state": {
+      "enum": [
+        "planned",
+        "running",
+        "succeeded",
+        "failed",
+        "timed_out",
+        "invalid",
+        "unknown"
+      ]
+    },
+    "loaded_skill_ids": {
+      "anyOf": [
+        {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^ecc/[A-Za-z0-9][A-Za-z0-9_.-]{0,127}$"
+          },
+          "uniqueItems": true
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "selected_skill_ids": {
+      "anyOf": [
+        {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^ecc/[A-Za-z0-9][A-Za-z0-9_.-]{0,127}$"
+          },
+          "uniqueItems": true
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "applied_skill_ids": {
+      "anyOf": [
+        {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^ecc/[A-Za-z0-9][A-Za-z0-9_.-]{0,127}$"
+          },
+          "uniqueItems": true
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "task_success": {
+      "type": [
+        "boolean",
+        "null"
+      ]
+    },
+    "usage": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "description": "Provider-native usage; never catalog context. Opaque keys are intentionally preserved."
+    },
+    "cost_usd": {
+      "anyOf": [
+        {
+          "type": "number",
+          "minimum": 0
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "duration_seconds": {
+      "anyOf": [
+        {
+          "type": "number",
+          "minimum": 0
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "catalog_measurement": {
+      "anyOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "value": {
+              "type": "number",
+              "minimum": 0
+            },
+            "unit": {
+              "const": "tokens"
+            },
+            "method": {
+              "const": "host_context"
+            },
+            "scope": {
+              "enum": [
+                "initial",
+                "initial_and_loaded"
+              ]
+            },
+            "origin": {
+              "const": "host_observed"
+            }
+          },
+          "required": [
+            "value",
+            "unit",
+            "method",
+            "scope",
+            "origin"
+          ]
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "error": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "reason": {
+      "type": [
+        "string",
+        "null"
+      ]
+    }
+  },
+  "required": [
+    "schema_version",
+    "trial_id",
+    "case_id",
+    "arm",
+    "repetition",
+    "attempt",
+    "state",
+    "loaded_skill_ids",
+    "selected_skill_ids",
+    "applied_skill_ids",
+    "task_success",
+    "usage",
+    "cost_usd",
+    "duration_seconds",
+    "catalog_measurement",
+    "error"
+  ],
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://fastskillretrieval.local/schemas/run-observation-v1.schema.json",
+  "title": "Experiment run observation v1"
+}

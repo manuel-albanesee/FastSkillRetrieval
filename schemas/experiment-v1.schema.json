@@ -1,0 +1,406 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]{0,127}$"
+    },
+    "revision": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "purpose": {
+      "enum": [
+        "development",
+        "pilot",
+        "holdout",
+        "historical"
+      ]
+    },
+    "corpus": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^ecc/[A-Za-z0-9][A-Za-z0-9_.-]{0,127}$"
+          },
+          "path": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^(?!/)(?!.*\\\\)(?!.*:)(?!.*(?:^|/)\\.{1,2}(?:/|$))(?!.*//)(?!.*[. ](?:/|$))(?!.*(?:^|/)(?i:con|prn|aux|nul|com[1-9]|lpt[1-9])(?:\\.|/|$))[^/]+(?:/[^/]+)*$"
+          },
+          "sha256": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          }
+        },
+        "required": [
+          "id",
+          "path",
+          "sha256"
+        ]
+      }
+    },
+    "config_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "client": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "const": "claude-code"
+        },
+        "version": {
+          "type": "string",
+          "minLength": 1
+        },
+        "model": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "name",
+        "version",
+        "model"
+      ]
+    },
+    "arms": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 3,
+      "uniqueItems": true,
+      "items": {
+        "enum": [
+          "A_NATIVE",
+          "B_CURATED",
+          "C_FSR"
+        ]
+      },
+      "allOf": [
+        {
+          "contains": {
+            "const": "A_NATIVE"
+          }
+        },
+        {
+          "contains": {
+            "const": "C_FSR"
+          }
+        }
+      ]
+    },
+    "repetitions": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "cases": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]{0,127}$"
+          },
+          "group": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]{0,127}$"
+          },
+          "language": {
+            "enum": [
+              "it",
+              "en"
+            ]
+          },
+          "split": {
+            "enum": [
+              "development",
+              "pilot",
+              "holdout",
+              "historical"
+            ]
+          },
+          "query": {
+            "type": "string",
+            "minLength": 1
+          },
+          "essential": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": "^ecc/[A-Za-z0-9][A-Za-z0-9_.-]{0,127}$"
+            },
+            "uniqueItems": true,
+            "maxItems": 5
+          },
+          "acceptable": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": "^ecc/[A-Za-z0-9][A-Za-z0-9_.-]{0,127}$"
+            },
+            "uniqueItems": true
+          },
+          "rationale": {
+            "type": "string",
+            "minLength": 1
+          },
+          "task_kind": {
+            "const": "declarative"
+          },
+          "resources": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "path": {
+                  "type": "string",
+                  "minLength": 1,
+                  "pattern": "^(?!/)(?!.*\\\\)(?!.*:)(?!.*(?:^|/)\\.{1,2}(?:/|$))(?!.*//)(?!.*[. ](?:/|$))(?!.*(?:^|/)(?i:con|prn|aux|nul|com[1-9]|lpt[1-9])(?:\\.|/|$))[^/]+(?:/[^/]+)*$"
+                },
+                "sha256": {
+                  "type": "string",
+                  "pattern": "^[a-f0-9]{64}$"
+                }
+              },
+              "required": [
+                "path",
+                "sha256"
+              ]
+            }
+          },
+          "human_review": {
+            "anyOf": [
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "reviewer": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "reviewed_at": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "required": [
+                  "reviewer",
+                  "reviewed_at"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "group",
+          "language",
+          "split",
+          "query",
+          "essential",
+          "acceptable",
+          "rationale",
+          "task_kind",
+          "resources",
+          "human_review"
+        ]
+      }
+    },
+    "metrics": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "catalog_threshold": {
+          "const": 0.3
+        },
+        "essential_loss_tolerance": {
+          "const": 0
+        },
+        "latency_p95_ms": {
+          "const": 300
+        },
+        "aggregation": {
+          "const": "ratio_of_means"
+        },
+        "catalog_scope": {
+          "enum": [
+            "initial",
+            "initial_and_loaded"
+          ]
+        },
+        "cache_policy": {
+          "const": "report_separately"
+        },
+        "generalization": {
+          "const": "descriptive_only"
+        }
+      },
+      "required": [
+        "catalog_threshold",
+        "essential_loss_tolerance",
+        "latency_p95_ms",
+        "aggregation",
+        "catalog_scope",
+        "cache_policy",
+        "generalization"
+      ]
+    },
+    "retention": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "policy": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "policy"
+      ]
+    },
+    "budget": {
+      "anyOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "trial_usd": {
+              "type": "number",
+              "exclusiveMinimum": 0
+            },
+            "session_usd": {
+              "type": "number",
+              "exclusiveMinimum": 0
+            },
+            "experiment_usd": {
+              "type": "number",
+              "exclusiveMinimum": 0
+            },
+            "timeout_seconds": {
+              "type": "number",
+              "exclusiveMinimum": 0
+            },
+            "inflight_overshoot_usd": {
+              "type": "number",
+              "minimum": 0
+            },
+            "max_turns": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          "required": [
+            "trial_usd",
+            "session_usd",
+            "experiment_usd",
+            "timeout_seconds",
+            "inflight_overshoot_usd",
+            "max_turns"
+          ]
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "approval": {
+      "anyOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "fingerprint": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            },
+            "reviewer": {
+              "type": "string",
+              "minLength": 1
+            },
+            "authorized_by": {
+              "type": "string",
+              "minLength": 1
+            },
+            "authorized_at": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "required": [
+            "fingerprint",
+            "reviewer",
+            "authorized_by",
+            "authorized_at"
+          ]
+        },
+        {
+          "type": "null"
+        }
+      ]
+    }
+  },
+  "required": [
+    "schema_version",
+    "id",
+    "revision",
+    "purpose",
+    "corpus",
+    "config_sha256",
+    "client",
+    "arms",
+    "repetitions",
+    "cases",
+    "metrics",
+    "retention",
+    "budget",
+    "approval"
+  ],
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://fastskillretrieval.local/schemas/experiment-v1.schema.json",
+  "title": "Offline experiment protocol v1",
+  "$comment": "Run validate_protocol as well: corpus references, grouped split integrity, approval fingerprint and ordered budget caps are semantic invariants.",
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "purpose": {
+            "const": "historical"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "corpus": {
+            "minItems": 100,
+            "maxItems": 100
+          },
+          "cases": {
+            "minItems": 20,
+            "maxItems": 20
+          },
+          "arms": {
+            "minItems": 3
+          }
+        }
+      }
+    }
+  ]
+}

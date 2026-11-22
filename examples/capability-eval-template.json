@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "status": "unapproved",
+  "purpose": "Human-approved evaluation of 100 real skills against 20 agreed requests",
+  "required_skill_count": 100,
+  "required_request_count": 20,
+  "skill_references": [],
+  "requests": [],
+  "request_fields_to_complete": [
+    "id",
+    "query",
+    "expected_essential_capability_references",
+    "baseline_context_evidence",
+    "retrieval_context_evidence",
+    "human_review"
+  ],
+  "approval": null,
+  "results": null,
+  "notes": "Empty template: no human corpus or approval is inferred from synthetic benchmarks."
+}

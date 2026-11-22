@@ -1,0 +1,180 @@
+{
+  "application": "fastskillretrieval",
+  "version": "0.2.0",
+  "date": "2026-10-18",
+  "coordination": {
+    "skills": [
+      "ecc:orch-add-feature",
+      "ecc:tdd-workflow"
+    ],
+    "final_subagent_model": "gpt-5.6-terra",
+    "reasoning": "high"
+  },
+  "git": {
+    "branch": "main",
+    "remotes": [],
+    "head": null,
+    "commits_created": false
+  },
+  "tests": {
+    "passed": 155,
+    "skipped": 1,
+    "duration_seconds": 94.15,
+    "skip_reason": "Windows symlink creation requires developer mode or privileges",
+    "coverage_includes_subprocesses": true,
+    "coverage": {
+      "covered_lines": 1751,
+      "num_statements": 2008,
+      "percent_covered": 87.2011952191235,
+      "percent_covered_display": "87",
+      "missing_lines": 257,
+      "excluded_lines": 0,
+      "percent_statements_covered": 87.2011952191235,
+      "percent_statements_covered_display": "87"
+    },
+    "json_schema_recheck_passed": 10,
+    "ruff": "passed"
+  },
+  "mcp": {
+    "source": {
+      "legacy_tools": 8,
+      "legacy_calls": 13,
+      "registry_tools": 17,
+      "registry_calls": 13,
+      "status": "passed"
+    },
+    "installed_wheel": {
+      "legacy_calls": 13,
+      "registry_calls": 13,
+      "status": "passed"
+    }
+  },
+  "host": {
+    "client": "Claude Code",
+    "version": "2.1.302",
+    "legacy_mcp_calls": 6,
+    "native_probe_calls": 1,
+    "repetitions": 1,
+    "planner_dispatch": "unverified",
+    "native_tool_enforcement": "unverified",
+    "native_registry_gate": "closed",
+    "native_subagent_tool_uses": 0
+  },
+  "benchmarks": [
+    {
+      "size": 100,
+      "synthetic": true,
+      "fixture_reused": true,
+      "scope": "Registry.call(search) plus JSON serialization",
+      "warmup": 10,
+      "samples": 100,
+      "query_count": 20,
+      "repetitions": 5,
+      "shuffle_seed": 20261018,
+      "limit": 1,
+      "independent_sessions": true,
+      "preparation": "validated SQL seed with real source files and snapshots",
+      "build_ms_excluded": 13693.725500022992,
+      "p50_ms": 31.9728,
+      "p95_ms": 36.0048,
+      "max_ms": 44.4383,
+      "statuses": {
+        "ok": 100
+      },
+      "verification": {
+        "resource_marker": true,
+        "snapshot_tamper_rejected": true
+      }
+    },
+    {
+      "size": 5000,
+      "synthetic": true,
+      "fixture_reused": true,
+      "scope": "Registry.call(search) plus JSON serialization",
+      "warmup": 10,
+      "samples": 100,
+      "query_count": 20,
+      "repetitions": 5,
+      "shuffle_seed": 20261018,
+      "limit": 1,
+      "independent_sessions": true,
+      "preparation": "validated SQL seed with real source files and snapshots",
+      "build_ms_excluded": 345200.4779999843,
+      "p50_ms": 31.2075,
+      "p95_ms": 35.5995,
+      "max_ms": 49.9772,
+      "statuses": {
+        "ok": 100
+      },
+      "verification": {
+        "resource_marker": true,
+        "snapshot_tamper_rejected": true
+      }
+    }
+  ],
+  "human_evaluation": {
+    "corpus_100_skills_20_requests": "not_evaluated",
+    "abc_comparison": "not_evaluated",
+    "context_reduction_30_percent": "not_demonstrated"
+  },
+  "packaging": {
+    "wheel": "fastskillretrieval-0.2.0-py3-none-any.whl",
+    "sdist": "fastskillretrieval-0.2.0.tar.gz",
+    "offline_lock_install": "passed",
+    "python_module_entrypoint": "verified",
+    "windows_exe_entrypoint": "access_denied",
+    "published": false
+  },
+  "operational_state_migrated": false,
+  "review": {
+    "unresolved_high_critical": 0,
+    "scope": "concrete local implementation review; not a general security certification"
+  },
+  "code_sha256": {
+    "src/fastskillretrieval/__init__.py": "9d36a7ef4ca62a4a3034f95d25a0ee6888fd9788f6a522e16cf81fd4f7f1ed9a",
+    "src/fastskillretrieval/__main__.py": "935a1c1166b0c1ea35a82256345000bf2c73ded718d77773bc27a71ecce28f7d",
+    "src/fastskillretrieval/capabilities.py": "450296ae86986b9a276cdbfad3d4253c209834271fcee91f3002941debdd6405",
+    "src/fastskillretrieval/catalog.py": "932a620072a7f94b4abad1edb8ea74aa373a1679cb0c09006d1bfb00f58add26",
+    "src/fastskillretrieval/cli.py": "083764cf2e4eb4739e7cc1df568df51644d4d39dee773c418cd8f549eb75335f",
+    "src/fastskillretrieval/contracts.py": "383af483ef0094640e95d87d48671fca5653d6eb728cef27cb321a551652d480",
+    "src/fastskillretrieval/legacy.py": "01ac92a852778d27f91a7557e4852775d8fb9d05e57b76646fea9fb31a3cea56",
+    "src/fastskillretrieval/migrations.py": "171b46c6af7e5533f8cbe5a58a1ea1c5ae2d0b21ffe20eb6ed72f6a7c719b451",
+    "src/fastskillretrieval/packages.py": "7ad005ccbfc16c485bd65ca6613942876fc785ba89157ea247697ebcfee60a30",
+    "src/fastskillretrieval/registry.py": "53345b8a84a7c46ac75529c6617deece3f20cd667aea61fe9d3859d7663c6ade",
+    "src/fastskillretrieval/runtime.py": "cb1072a297509d568d0f8475bd337b9da5dbdc6170d5708c9da8fdfd24287d09",
+    "src/fastskillretrieval/server.py": "579342663982006ede109eeef3d261782b6769d1dd6674fc01cf735fd5ed32d6",
+    "scripts/benchmark_registry.py": "ab7cf06b4e5089cbd047f0851687ea164ae18b94301e9f096e8d18b00f5dcf10",
+    "scripts/prepare_claude_test.py": "a8f22c9edb7eae10074a6e3242a61d7bfa3f8c81585c92318e898be21d387875",
+    "scripts/verify_mcp.py": "aa634f998fa311a40f22da76c7474bfed2f1ad194d03d7c83708160e697e4527",
+    "scripts/verify_registry_mcp.py": "16918182f7864b5124841fce99fc0d7cce3f361d74625728fa5a7dcc59ff6b45",
+    "tests/conftest.py": "91ebd25e766bb70413962f3fbf93e6e5b9b985654576f86f43ff159c203053cc",
+    "tests/test_aliases.py": "ea9bb8eb3142f5314f623314aeb9a09c89d9851a694e5747e821c071733e6c6d",
+    "tests/test_benchmark_registry.py": "83279646501c63419be01c65b877e09b344b8b6479b9e54a0299b184eb5236d1",
+    "tests/test_capability_contracts.py": "12540aca27af459aa8b0dae059ce4c2c4f78a85a17f900e858066184a2a7dc35",
+    "tests/test_capability_interfaces.py": "0ce3eca6c9278656a9a06cae7b52e64fc2db5ddb26dd8b8a83f39b4d3106eb3f",
+    "tests/test_catalog.py": "a33f846cf97734a42f9274229b8a6c8581170b14c629d0013bdd0f732db96da0",
+    "tests/test_ingestion.py": "d2193d4f5a42c539f90a00ba8661c19c95106aa69a3e6a64dcbc47268abeff49",
+    "tests/test_ingestion_incremental.py": "7c6edba8956d1d6f85687f27e5e43ea599548de01421270124adb3c24a0f42cd",
+    "tests/test_interfaces.py": "b6928055b23ee22ef2cb560e51e1b7fb7feea33f70175cc810c0b671e241319d",
+    "tests/test_json_schemas.py": "fc459d457b16b188b71e1dcdb97fc11896c04ad42c52defb3dd5f56855b19c2b",
+    "tests/test_maintenance.py": "830668c67a1003ab637007100e449f393f15ad7c8e222d1a17fa7cdb87d0aef5",
+    "tests/test_planner.py": "df7e0d392e0aa6f7aab29f45ddc846604983d8ba4231a5fd99b337f4992176eb",
+    "tests/test_registry.py": "68e073f9386cb3420d41ab53dc70a1ad5bd126a7e26df7c127e27ce10ee25660",
+    "tests/test_registry_migrations.py": "f3901c2866d77f752a8fefd1421ba1be659d9471afb4724c29f166dc8d177cb1",
+    "tests/test_registry_retention.py": "1803b1280e17c57bd6f697452f5289c98af3462afc5588178698fc57b21acc6c",
+    "tests/test_registry_security.py": "e2d779e86c91b678965ab49d9b7da4e200fa6681752e700eff10a0162bd48dc2",
+    "tests/test_runtime_bindings.py": "ef96c382d55aa3fe8b0cccfd37aab1f98b7f9629503a6dce9937e538f3b26e79",
+    "tests/test_state_boundaries.py": "6f9c56d15cbdc8a36d2727450f4b06933e6eb88a93be656a990fa168cffed477",
+    "schemas/operator-manifest-v1.schema.json": "cd9202e6923c0b6d2655135a87371917d5ecea0e81bf1bc2ea26e995de2bbfb4",
+    "schemas/plan-response-v1.schema.json": "360bb4a17bca90bc7cdaff6a77f9808d84433753dd80026b2686dcfc70f0979d",
+    "schemas/reference-v2.schema.json": "2c3bc26eb63c231b8f787a6958e483f2eebfce43f7a4b0e9376d3bf962008b0c",
+    "schemas/search-request-v1.schema.json": "78d2459620135013bb25e2134f49274d723f6fd16985476529bb2f76948191a0",
+    "schemas/workflow-step-v1.schema.json": "0d2c22385c7624833a9b20b5b3ab3633551b8f0478fcfcb06972a82718dbf1c9",
+    "pyproject.toml": "34809035811d6995a7b7391398d382ef96ecff63303f19420306ffe0d452b36c",
+    "uv.lock": "ba65e713a0b39cc17d727a0ab8af26b78c057412ed2ce70b83b51edf41d41633",
+    "MANIFEST.in": "ee71a31661658a98df62c3e253963cc9a67f4e03d40b190ca877446408152840",
+    ".gitignore": "6e5e296455039fdac4dfa8770fa32362b8942774349728f7e51dc57f35a710eb",
+    ".gitattributes": "29d3068d900ff64ac076129d1200027f6b2794682f035818b23516b8a46bbbb7",
+    ".claude/evals/capability-retrieval.md": "77a76b67c0f7a6c5e489777c28004c871b2f82da22a0c5e9abd54531e8ccf813"
+  }
+}

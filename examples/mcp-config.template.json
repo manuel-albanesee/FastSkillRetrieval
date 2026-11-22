@@ -1,0 +1,15 @@
+{
+  "mcpServers": {
+    "fastskillretrieval": {
+      "type": "stdio",
+      "command": "REPLACE_WITH_ABSOLUTE_VENV_PYTHON_PATH",
+      "args": [
+        "-m", "fastskillretrieval",
+        "--registry",
+        "--state", "REPLACE_WITH_ABSOLUTE_STATE_DIRECTORY",
+        "--source-root", "REPLACE_WITH_ABSOLUTE_SKILL_ROOT",
+        "serve"
+      ]
+    }
+  }
+}

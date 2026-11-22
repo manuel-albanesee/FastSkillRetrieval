@@ -1,0 +1,634 @@
+{
+  "schema_version": 1,
+  "id": "ecc-pilot-proposal-v1",
+  "revision": 1,
+  "purpose": "pilot",
+  "corpus": [
+    {
+      "id": "ecc/accessibility",
+      "path": "skills/accessibility/SKILL.md",
+      "sha256": "2762f21d09d199009ed4f95b28c911436b367c30963dc5ddb48b8e1ad7fc1585"
+    },
+    {
+      "id": "ecc/agent-architecture-audit",
+      "path": "skills/agent-architecture-audit/SKILL.md",
+      "sha256": "64f57e232c3533877403703bc95b3c75df9de23f657899a306f13c703009ff57"
+    },
+    {
+      "id": "ecc/agent-eval",
+      "path": "skills/agent-eval/SKILL.md",
+      "sha256": "57fa683e356b6f5612bc6d7dc101ae39c126e6edf9a48f4ec53afea3e80d7e5d"
+    },
+    {
+      "id": "ecc/agent-harness-construction",
+      "path": "skills/agent-harness-construction/SKILL.md",
+      "sha256": "e7fb390a6663b46ea5d3c2876753a5ce32ba3bad1889686b21a42894caa1742d"
+    },
+    {
+      "id": "ecc/agent-introspection-debugging",
+      "path": "skills/agent-introspection-debugging/SKILL.md",
+      "sha256": "0cdbfe3c822ff50d21df8cd0e20c72407a6f5658089edc0e96e79a03927cb956"
+    },
+    {
+      "id": "ecc/agent-runtime-gateway-smoke-test",
+      "path": "skills/agent-runtime-gateway-smoke-test/SKILL.md",
+      "sha256": "69c3a3825244aed5b5d3b2de517185f9cf0adfc3db83b128049440a626f2ddbf"
+    },
+    {
+      "id": "ecc/agent-security-hardening",
+      "path": "skills/agent-security-hardening/SKILL.md",
+      "sha256": "0e0895ada90aa8fa085e4257961ebe15f2dff43b843785b1533d4c731186ad81"
+    },
+    {
+      "id": "ecc/agent-self-evaluation",
+      "path": "skills/agent-self-evaluation/SKILL.md",
+      "sha256": "96bb21eb37760f596789f84ec0a5dad4ef92fc2255e35cd7b88dc4234062b8c1"
+    },
+    {
+      "id": "ecc/agent-sort",
+      "path": "skills/agent-sort/SKILL.md",
+      "sha256": "5847fc20cf0fd0d00c0c2dbacca03472c5a43af429978cf874dd41ecc144dc53"
+    },
+    {
+      "id": "ecc/agentic-engineering",
+      "path": "skills/agentic-engineering/SKILL.md",
+      "sha256": "41c32c20ec97469341f5d83d8beb15f03d1b6f1c40fb1bdf534c50cd9a38cb6f"
+    },
+    {
+      "id": "ecc/agentic-os",
+      "path": "skills/agentic-os/SKILL.md",
+      "sha256": "e1d1207353652456ac84a821e5522def1d108677318630af4fd7ac16735b5c04"
+    },
+    {
+      "id": "ecc/ai-first-engineering",
+      "path": "skills/ai-first-engineering/SKILL.md",
+      "sha256": "114913bdcb6127392df56d96f7f1312f36c74d69c278dece6d377b9bd92123a5"
+    },
+    {
+      "id": "ecc/ai-regression-testing",
+      "path": "skills/ai-regression-testing/SKILL.md",
+      "sha256": "83f2f5c4083af5762dd658f742d4a390eb3a6f969d835f69e8f47efba296c127"
+    },
+    {
+      "id": "ecc/api-connector-builder",
+      "path": "skills/api-connector-builder/SKILL.md",
+      "sha256": "00a0d01e234f213d343f0040bbebd56e042978768ce5bb7117776a75bd9547e8"
+    },
+    {
+      "id": "ecc/api-design",
+      "path": "skills/api-design/SKILL.md",
+      "sha256": "250e464413a13c0eb93cc73447b423df1f9aa8e4f80e5e68c41f895b2c33e352"
+    },
+    {
+      "id": "ecc/architecture-decision-records",
+      "path": "skills/architecture-decision-records/SKILL.md",
+      "sha256": "263b20e81801aa5fa7e75eaec6c38345c0ac028ca0edbd67b1b9071c5fcbe11f"
+    },
+    {
+      "id": "ecc/article-writing",
+      "path": "skills/article-writing/SKILL.md",
+      "sha256": "4aa61709450a2148ef4036896d870da748e93ad68528bb7679b74f3597ffb021"
+    },
+    {
+      "id": "ecc/automation-audit-ops",
+      "path": "skills/automation-audit-ops/SKILL.md",
+      "sha256": "71aa878fd06ef02f0c8ca50eaaee0ec45995981d769d8701806b9b83ca8a2f2c"
+    },
+    {
+      "id": "ecc/backend-patterns",
+      "path": "skills/backend-patterns/SKILL.md",
+      "sha256": "9b983d0297a983110fdfda8dce55d19b750ca3e53ef155d75a3eff740d3874b8"
+    },
+    {
+      "id": "ecc/benchmark",
+      "path": "skills/benchmark/SKILL.md",
+      "sha256": "58e34c3ccf60ee5155e3db74357b73770015a7aad3594649b6758ba8375ab6ff"
+    },
+    {
+      "id": "ecc/benchmark-optimization-loop",
+      "path": "skills/benchmark-optimization-loop/SKILL.md",
+      "sha256": "f11208b6a86bc311cfbd9e20688a189238fda6c1e03b6f8000ef9e55487f6f95"
+    },
+    {
+      "id": "ecc/blueprint",
+      "path": "skills/blueprint/SKILL.md",
+      "sha256": "878eae8ed0ea4d46d21c8f88d471f6ffce7b0815202a43501060a163e7f446f3"
+    },
+    {
+      "id": "ecc/browser-qa",
+      "path": "skills/browser-qa/SKILL.md",
+      "sha256": "6eb78a2460adcde116e6b44fcdff7ae37aeec6208241a24417cb2db4b3b254cd"
+    },
+    {
+      "id": "ecc/bun-runtime",
+      "path": "skills/bun-runtime/SKILL.md",
+      "sha256": "fc0ff230f098d3537c5a6c6fa0466a4d3cc20c3a903cee40c774713fb52aa61f"
+    },
+    {
+      "id": "ecc/change-impact",
+      "path": "skills/change-impact/SKILL.md",
+      "sha256": "b8d8a11417af8b84e93983a8eb682e3b9a16d04f926778eb635c96e90019bf18"
+    },
+    {
+      "id": "ecc/click-path-audit",
+      "path": "skills/click-path-audit/SKILL.md",
+      "sha256": "662fc5d02483bcd8ff799d6d3109a38da673182341cfc14445e9076fcd920162"
+    },
+    {
+      "id": "ecc/code-tour",
+      "path": "skills/code-tour/SKILL.md",
+      "sha256": "416c7eb9229554a1ef113bbb873ff0b260a2ad9ae6e6075a75c375955d3fcf6f"
+    },
+    {
+      "id": "ecc/codebase-onboarding",
+      "path": "skills/codebase-onboarding/SKILL.md",
+      "sha256": "ef88873a4b0d0fe155c0a196ffecd5c7b5e28edd00fbbdb5c1fd2ca8fd0eb6f0"
+    },
+    {
+      "id": "ecc/codehealth-mcp",
+      "path": "skills/codehealth-mcp/SKILL.md",
+      "sha256": "c5943c4c353b02dcd87b751de15bb087caae2f11c36e84a74e181fe2eadee394"
+    },
+    {
+      "id": "ecc/coding-standards",
+      "path": "skills/coding-standards/SKILL.md",
+      "sha256": "e80544c3d1eac5b14f22022146bd91a6b0ecc30e099cf5181894853aeb81dee1"
+    },
+    {
+      "id": "ecc/contract-first",
+      "path": "skills/contract-first/SKILL.md",
+      "sha256": "3eaacf16a9bbd92888659e9c1e15b0fa4eb96a41c257dd9e08f2e63b824f0cea"
+    },
+    {
+      "id": "ecc/conventional-commit-review",
+      "path": "skills/conventional-commit-review/SKILL.md",
+      "sha256": "c81397a4bfc2ec66986aae7a4dff5a02f78c519bc9774a80778fa9055e7fa2fe"
+    },
+    {
+      "id": "ecc/cost-aware-llm-pipeline",
+      "path": "skills/cost-aware-llm-pipeline/SKILL.md",
+      "sha256": "2d6c19c2d21a473db8720c4f723f17d265eeec48f84614f0169be2df2fbe28ff"
+    },
+    {
+      "id": "ecc/cost-tracking",
+      "path": "skills/cost-tracking/SKILL.md",
+      "sha256": "f868207abd550308bc18902ecdfd2c51ad1ea85ba692dbe95cd9c3561da2a8bb"
+    },
+    {
+      "id": "ecc/database-migrations",
+      "path": "skills/database-migrations/SKILL.md",
+      "sha256": "dad2f1964295eee14a96e06213ce3f60992bbcdc1f37a50c828bbc2e1abd79dd"
+    },
+    {
+      "id": "ecc/deep-research",
+      "path": "skills/deep-research/SKILL.md",
+      "sha256": "ca02a97ff8cd794c55a1313ab423a6a165fdf2ce59059a73e08f7cfd957b5319"
+    },
+    {
+      "id": "ecc/delivery-gate",
+      "path": "skills/delivery-gate/SKILL.md",
+      "sha256": "1f20dd3c7f10aa459fa025f2070bd9cb2d93028a71c01e46d2c60906da000b5b"
+    },
+    {
+      "id": "ecc/deployment-patterns",
+      "path": "skills/deployment-patterns/SKILL.md",
+      "sha256": "b864abd1954570c4a469b7e1deb897e57858d25db2fd98d035ff7bca4a15b9b6"
+    },
+    {
+      "id": "ecc/design-system",
+      "path": "skills/design-system/SKILL.md",
+      "sha256": "1969e4cb6cd13cdafff5f84353047d6e55cebc24e1a595ec48e6e2c666f3d8b1"
+    },
+    {
+      "id": "ecc/documentation-lookup",
+      "path": "skills/documentation-lookup/SKILL.md",
+      "sha256": "81ad2b5b4acbe02259f4b6cbfd9111d81d5cfe51025051b6048959c45f6516c1"
+    },
+    {
+      "id": "ecc/dynamic-workflow-mode",
+      "path": "skills/dynamic-workflow-mode/SKILL.md",
+      "sha256": "bdf7902e4e213c6f2e7bdc417757004d118e8e36267239b707670e2875ebf7bf"
+    },
+    {
+      "id": "ecc/e2e-testing",
+      "path": "skills/e2e-testing/SKILL.md",
+      "sha256": "b0e00e7e17cb259101139900816c5528aed18dd10bcf5f9cb42cfc35baf8a755"
+    },
+    {
+      "id": "ecc/ecc-guide",
+      "path": "skills/ecc-guide/SKILL.md",
+      "sha256": "472d72a270cbd7f4eaf7fc73a1313f40a4995575c5e2d2ff4f91c280f5ee5df9"
+    },
+    {
+      "id": "ecc/ecc-recipes",
+      "path": "skills/ecc-recipes/SKILL.md",
+      "sha256": "0c3250fe8c8c1384f1dc4a8b8bd57e3a80037d4964c7c18848e449bf03866644"
+    },
+    {
+      "id": "ecc/ecc-tools-cost-audit",
+      "path": "skills/ecc-tools-cost-audit/SKILL.md",
+      "sha256": "efcc5b7c850d5a2f1b853c25a92b392fa0bf62451e5799b9a5efb905dbf45337"
+    },
+    {
+      "id": "ecc/error-handling",
+      "path": "skills/error-handling/SKILL.md",
+      "sha256": "e8eec6756c950b570486493e64e3bf14c12baf6bf0858bf3928097fe2bfeaf79"
+    },
+    {
+      "id": "ecc/eval-harness",
+      "path": "skills/eval-harness/SKILL.md",
+      "sha256": "3a5339a5a80099a5c9d55da9b6c8e05a690f5befc6f78d779c75dd79d818ca07"
+    },
+    {
+      "id": "ecc/fastapi-patterns",
+      "path": "skills/fastapi-patterns/SKILL.md",
+      "sha256": "f54c2bf5a61eeda47c939da265b1431d609c231611e71b688b0b734a064b18f3"
+    },
+    {
+      "id": "ecc/frontend-a11y",
+      "path": "skills/frontend-a11y/SKILL.md",
+      "sha256": "e00991a3f4d47fcf1529dd74a080afcf46137dc5061e70dc6e3da7b27f2ae3f3"
+    },
+    {
+      "id": "ecc/frontend-design-direction",
+      "path": "skills/frontend-design-direction/SKILL.md",
+      "sha256": "71a40f7bc4a28da01b54527fe5590f6055c93adc630e6ceee8c892b35c980893"
+    },
+    {
+      "id": "ecc/frontend-patterns",
+      "path": "skills/frontend-patterns/SKILL.md",
+      "sha256": "a5b971eb9e74cd763c7e3308bfd888e0d9cf69f8b88477659889d77182479740"
+    },
+    {
+      "id": "ecc/git-workflow",
+      "path": "skills/git-workflow/SKILL.md",
+      "sha256": "7094ab94802d7e839dc33c6ea230020327260518b1b1ce62b42d56d051c1d7c5"
+    },
+    {
+      "id": "ecc/github-ops",
+      "path": "skills/github-ops/SKILL.md",
+      "sha256": "281e19fbf138c8d7ac7379864825721aa6f6efcf4008e976a6ea34b3c96e2b54"
+    },
+    {
+      "id": "ecc/golang-patterns",
+      "path": "skills/golang-patterns/SKILL.md",
+      "sha256": "d643e354683167727cfeb76934855db988468cd15b3ca01db9a32db43902edf7"
+    },
+    {
+      "id": "ecc/golang-testing",
+      "path": "skills/golang-testing/SKILL.md",
+      "sha256": "e3399562c58590dfcbd09bfcbf8f401120a2ded0418eb33bbfca6c697ac485ad"
+    },
+    {
+      "id": "ecc/knowledge-ops",
+      "path": "skills/knowledge-ops/SKILL.md",
+      "sha256": "958529713af2ab29c7b31b3cb758953271174b8909c94f1238dd7c78671672c2"
+    },
+    {
+      "id": "ecc/latency-critical-systems",
+      "path": "skills/latency-critical-systems/SKILL.md",
+      "sha256": "e533b86d34fe05f5db46365608e15df35386f4d9ad2b8d9d0a350cce5fa8b59d"
+    },
+    {
+      "id": "ecc/living-docs-governance",
+      "path": "skills/living-docs-governance/SKILL.md",
+      "sha256": "e8c22a1f69743e256c6d6df138d99e49d22e29effbf008dfe2328b7fdc76247e"
+    },
+    {
+      "id": "ecc/mcp-dependency-review",
+      "path": "skills/mcp-dependency-review/SKILL.md",
+      "sha256": "766536baa981710a85c8f761675f6a57f58600fff42b23ccf6171606180f4c12"
+    },
+    {
+      "id": "ecc/mcp-server-patterns",
+      "path": "skills/mcp-server-patterns/SKILL.md",
+      "sha256": "eacb07c953e0440c758e3ee7d92984d2c9128e3444005ea7ad5da7bc0201d43d"
+    },
+    {
+      "id": "ecc/market-research",
+      "path": "skills/market-research/SKILL.md",
+      "sha256": "8cfc36dc8a93476d092115f3fc70c631dcab14fcd6e04371160fc4fb29547800"
+    },
+    {
+      "id": "ecc/ml-adoption-playbook",
+      "path": "skills/ml-adoption-playbook/SKILL.md",
+      "sha256": "488f83a5c3766043e0ff98466f8d5534f69863d9adebda8b4d2903f00860e312"
+    },
+    {
+      "id": "ecc/module-regression",
+      "path": "skills/module-regression/SKILL.md",
+      "sha256": "5c3db104f8e4aec868d010fa9354ec64b4c138557a59d13d7355fc9eacdcc846"
+    },
+    {
+      "id": "ecc/nextjs-turbopack",
+      "path": "skills/nextjs-turbopack/SKILL.md",
+      "sha256": "336034322d2022f47b097e55b5448cbc1e204c11f964910fa6fb3baeab06a474"
+    },
+    {
+      "id": "ecc/operator-approval-loop",
+      "path": "skills/operator-approval-loop/SKILL.md",
+      "sha256": "6f79952c1498c2748ea13d74ca665c7508ae72068e014e848dee0754e3d650e5"
+    },
+    {
+      "id": "ecc/orch-add-feature",
+      "path": "skills/orch-add-feature/SKILL.md",
+      "sha256": "6ba858d94cfaa05f3b1e63ad09656285a4a33009e9cd837ebcaf093d39d29a25"
+    },
+    {
+      "id": "ecc/orch-build-mvp",
+      "path": "skills/orch-build-mvp/SKILL.md",
+      "sha256": "ab8591b1b9a2711be93a9690bcee95ff8486faa00522aa8c0847d0481f7f64d9"
+    },
+    {
+      "id": "ecc/orch-change-feature",
+      "path": "skills/orch-change-feature/SKILL.md",
+      "sha256": "d35ee5dfdf5f64e60e8905124eccf73267bc59852e7d11ba5ca5acf7d765c6f8"
+    },
+    {
+      "id": "ecc/orch-fix-defect",
+      "path": "skills/orch-fix-defect/SKILL.md",
+      "sha256": "399e142bbf3751b5a0fdec1ae450f5673bd1a038304a221748c865280e885b2d"
+    },
+    {
+      "id": "ecc/orch-pipeline",
+      "path": "skills/orch-pipeline/SKILL.md",
+      "sha256": "26707fc276a0a8489a5919c48af22f0c2c2d12724d3e031080200281f26a3f2e"
+    },
+    {
+      "id": "ecc/orch-refine-code",
+      "path": "skills/orch-refine-code/SKILL.md",
+      "sha256": "5f0f468ffa4e220bd8f76684b3df6a14b67b34333e1ae52e0de49ed2c16fa17b"
+    },
+    {
+      "id": "ecc/parallel-execution-optimizer",
+      "path": "skills/parallel-execution-optimizer/SKILL.md",
+      "sha256": "e7de2fff9971d7bc179ac1827d62de701fd8951142d9e17ec7c782481c8b7941"
+    },
+    {
+      "id": "ecc/plan-canvas",
+      "path": "skills/plan-canvas/SKILL.md",
+      "sha256": "0ee9356f9305eb8ceec671753700a0a7a438c76dca9983ed87c66be0b5681b64"
+    },
+    {
+      "id": "ecc/plan-orchestrate",
+      "path": "skills/plan-orchestrate/SKILL.md",
+      "sha256": "df127a46f7b5db2608f00da04d0cdfe5ed4a075ecc7e2876189e1de26c99d4fe"
+    },
+    {
+      "id": "ecc/plankton-code-quality",
+      "path": "skills/plankton-code-quality/SKILL.md",
+      "sha256": "917920552320fdf0927a3bba61107eee8255dab469af80680dea40d671d51866"
+    },
+    {
+      "id": "ecc/postgres-patterns",
+      "path": "skills/postgres-patterns/SKILL.md",
+      "sha256": "9c8c391ae9e9aa87faa7ca091e1d395c97766df14080d0bfbea8a97721776163"
+    },
+    {
+      "id": "ecc/production-audit",
+      "path": "skills/production-audit/SKILL.md",
+      "sha256": "3ab3dd8a364ee17566e9361f0ebed2aec3b3146ede44e1db0a72c5ceae1ca0a4"
+    },
+    {
+      "id": "ecc/product-capability",
+      "path": "skills/product-capability/SKILL.md",
+      "sha256": "c26114356edb15f0340e5af66b6f4444892bdf376b053a7152312fd04d22aced"
+    },
+    {
+      "id": "ecc/product-lens",
+      "path": "skills/product-lens/SKILL.md",
+      "sha256": "58b82c847304b0c4fbf456c1f4ae9205f3733e011f8cbdeed30687f111a098c6"
+    },
+    {
+      "id": "ecc/prompt-caching-strategy",
+      "path": "skills/prompt-caching-strategy/SKILL.md",
+      "sha256": "bde64446760754680a6e821fce96ed70e4a409adc7145cb056a815aa64eb5b81"
+    },
+    {
+      "id": "ecc/prompt-optimizer",
+      "path": "skills/prompt-optimizer/SKILL.md",
+      "sha256": "e98058f34c3338014d0b9ef0c821d932d6820284d40d1eaf4f716bceb9147db0"
+    },
+    {
+      "id": "ecc/python-patterns",
+      "path": "skills/python-patterns/SKILL.md",
+      "sha256": "103e0130dac33a49d26705fc5a2df804980fcab6a0138d65bc7f370a987d49f6"
+    },
+    {
+      "id": "ecc/python-testing",
+      "path": "skills/python-testing/SKILL.md",
+      "sha256": "b9f7a158dae3b6c06c9c75ffe84e27a1edc86092d2afdcb39e96fc2569902eb7"
+    },
+    {
+      "id": "ecc/quality-nonconformance",
+      "path": "skills/quality-nonconformance/SKILL.md",
+      "sha256": "6aad53af0d1a5580f12f8901aca65946b29db88c5a394239d580cd0a57322edd"
+    },
+    {
+      "id": "ecc/react-patterns",
+      "path": "skills/react-patterns/SKILL.md",
+      "sha256": "f3208d44a5d553038c42e046cec4dc16e4a3d90a9dbf931f883a2e21919a64a9"
+    },
+    {
+      "id": "ecc/react-performance",
+      "path": "skills/react-performance/SKILL.md",
+      "sha256": "ac76e8694d4f802a7bccc3c07a73ac68ace6d82a65ea10f10d8b7384dda61a8f"
+    },
+    {
+      "id": "ecc/react-testing",
+      "path": "skills/react-testing/SKILL.md",
+      "sha256": "51c18b4e28285bb876ef469e47c6f53108b5a9f900950a60e897c3c24826a65e"
+    },
+    {
+      "id": "ecc/research-ops",
+      "path": "skills/research-ops/SKILL.md",
+      "sha256": "114d0e5480ce3ad263316c639ce0c401396e1d9fbec3cf15b3c962ae16f376db"
+    },
+    {
+      "id": "ecc/rules-distill",
+      "path": "skills/rules-distill/SKILL.md",
+      "sha256": "c451a63f96077f92ef6b40c4310f5a470a5d05103a181af518b115c4e828292c"
+    },
+    {
+      "id": "ecc/rust-patterns",
+      "path": "skills/rust-patterns/SKILL.md",
+      "sha256": "51379df2bd92a482309e109e5a210210842594f660cceeb2d68d18e995108edf"
+    },
+    {
+      "id": "ecc/rust-testing",
+      "path": "skills/rust-testing/SKILL.md",
+      "sha256": "02a9a40dcc42dd21d14730d29b13ee0a8b274694360585dc0fadb2602eb56ddf"
+    },
+    {
+      "id": "ecc/safety-guard",
+      "path": "skills/safety-guard/SKILL.md",
+      "sha256": "6378dad8e60286b3fcc32e064e4ba2e452000f5eef0cb2c2204ad7fe7dae3afc"
+    },
+    {
+      "id": "ecc/search-first",
+      "path": "skills/search-first/SKILL.md",
+      "sha256": "76835db48dd910061d2e4271b1151793d2fddbabeb2d2866eed068b3580c55d5"
+    },
+    {
+      "id": "ecc/security-review",
+      "path": "skills/security-review/SKILL.md",
+      "sha256": "b9eb6416eebc8dda046674f0a2dbb3be88aff526d182b60a0f55998d3d6d0d8d"
+    },
+    {
+      "id": "ecc/security-scan",
+      "path": "skills/security-scan/SKILL.md",
+      "sha256": "74bc3006fb15eef9cea6bf70a4e9cc45ec118ef00733d1c8226c9dc428f8d658"
+    },
+    {
+      "id": "ecc/skill-comply",
+      "path": "skills/skill-comply/SKILL.md",
+      "sha256": "e26cbbc30a32ea8c76c56d09ba9a3a921e82ad6e2360f825ec63d3f8df6b1f5a"
+    },
+    {
+      "id": "ecc/skill-host-compat",
+      "path": "skills/skill-host-compat/SKILL.md",
+      "sha256": "246242187c2da04369c23d782ba0970bcb9b9fb74acb421161649e4c572d4b54"
+    },
+    {
+      "id": "ecc/skill-scout",
+      "path": "skills/skill-scout/SKILL.md",
+      "sha256": "73ac14373108c29e35f6f950b43762e3e50848d693b712f7c3e989ec21e7abe8"
+    },
+    {
+      "id": "ecc/skill-stocktake",
+      "path": "skills/skill-stocktake/SKILL.md",
+      "sha256": "3de326f8f87216b024bf524433b91607068d805286394d5ed8e293b4799b7314"
+    },
+    {
+      "id": "ecc/tdd-workflow",
+      "path": "skills/tdd-workflow/SKILL.md",
+      "sha256": "8887afa786ef30de834e7567115d3df71934b343c3d9d849714f8ea43f979ee0"
+    }
+  ],
+  "config_sha256": "c3389f67b8fd690e82fca0603530cdc7e45cf2b9bf179ffa1ae6453005b8e64d",
+  "client": {
+    "name": "claude-code",
+    "version": "REPLACE_WITH_OBSERVED_VERSION",
+    "model": "REPLACE_WITH_OBSERVED_MODEL"
+  },
+  "arms": [
+    "A_NATIVE",
+    "B_CURATED",
+    "C_FSR"
+  ],
+  "repetitions": 3,
+  "cases": [
+    {
+      "id": "pilot-go-tests-it",
+      "group": "pilot-go-tests",
+      "language": "it",
+      "split": "pilot",
+      "query": "Proponi una tabella di test Go per input validi, errori e casi limite di una funzione pura.",
+      "essential": [
+        "ecc/golang-testing"
+      ],
+      "acceptable": [
+        "ecc/golang-patterns"
+      ],
+      "rationale": "Golang-testing covers table-driven tests and Go test methodology; golang-patterns is complementary idiomatic structure.",
+      "task_kind": "declarative",
+      "resources": [],
+      "human_review": null
+    },
+    {
+      "id": "pilot-go-tests-en",
+      "group": "pilot-go-tests",
+      "language": "en",
+      "split": "pilot",
+      "query": "Propose table-driven Go tests for valid inputs, errors and edge cases of a pure function.",
+      "essential": [
+        "ecc/golang-testing"
+      ],
+      "acceptable": [
+        "ecc/golang-patterns"
+      ],
+      "rationale": "Golang-testing covers table-driven tests and Go test methodology; golang-patterns is complementary idiomatic structure.",
+      "task_kind": "declarative",
+      "resources": [],
+      "human_review": null
+    },
+    {
+      "id": "pilot-fastapi-it",
+      "group": "pilot-fastapi",
+      "language": "it",
+      "split": "pilot",
+      "query": "Descrivi come separare router, dipendenze e validazione Pydantic in una piccola API FastAPI.",
+      "essential": [
+        "ecc/fastapi-patterns"
+      ],
+      "acceptable": [
+        "ecc/api-design"
+      ],
+      "rationale": "FastAPI-patterns supplies framework-specific router, dependency injection and validation practices; API-design complements HTTP contracts.",
+      "task_kind": "declarative",
+      "resources": [],
+      "human_review": null
+    },
+    {
+      "id": "pilot-fastapi-en",
+      "group": "pilot-fastapi",
+      "language": "en",
+      "split": "pilot",
+      "query": "Describe how to separate routers, dependencies and Pydantic validation in a small FastAPI API.",
+      "essential": [
+        "ecc/fastapi-patterns"
+      ],
+      "acceptable": [
+        "ecc/api-design"
+      ],
+      "rationale": "FastAPI-patterns supplies framework-specific router, dependency injection and validation practices; API-design complements HTTP contracts.",
+      "task_kind": "declarative",
+      "resources": [],
+      "human_review": null
+    },
+    {
+      "id": "pilot-skill-discovery-it",
+      "group": "pilot-skill-discovery",
+      "language": "it",
+      "split": "pilot",
+      "query": "Definisci una procedura per cercare skill esistenti localmente e nei marketplace prima di crearne una nuova.",
+      "essential": [
+        "ecc/skill-scout"
+      ],
+      "acceptable": [],
+      "rationale": "Skill-scout explicitly searches local, marketplace, GitHub and web sources before creating or forking skills.",
+      "task_kind": "declarative",
+      "resources": [],
+      "human_review": null
+    },
+    {
+      "id": "pilot-skill-discovery-en",
+      "group": "pilot-skill-discovery",
+      "language": "en",
+      "split": "pilot",
+      "query": "Define a procedure to find existing skills locally and in marketplaces before creating a new one.",
+      "essential": [
+        "ecc/skill-scout"
+      ],
+      "acceptable": [],
+      "rationale": "Skill-scout explicitly searches local, marketplace, GitHub and web sources before creating or forking skills.",
+      "task_kind": "declarative",
+      "resources": [],
+      "human_review": null
+    }
+  ],
+  "metrics": {
+    "catalog_threshold": 0.3,
+    "essential_loss_tolerance": 0,
+    "latency_p95_ms": 300,
+    "aggregation": "ratio_of_means",
+    "catalog_scope": "initial_and_loaded",
+    "cache_policy": "report_separately",
+    "generalization": "descriptive_only"
+  },
+  "retention": {
+    "policy": "Keep immutable local raw evidence; redact secrets and human-review artifacts before external sharing. Public dataset is descriptive; no protected holdout claim."
+  },
+  "budget": null,
+  "approval": null
+}

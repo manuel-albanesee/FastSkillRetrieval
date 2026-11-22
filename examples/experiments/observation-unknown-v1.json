@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "trial_id": "example-it-A_NATIVE-r1",
+  "case_id": "api-pagination-it",
+  "arm": "A_NATIVE",
+  "repetition": 1,
+  "attempt": 1,
+  "state": "unknown",
+  "loaded_skill_ids": null,
+  "selected_skill_ids": null,
+  "applied_skill_ids": null,
+  "task_success": null,
+  "usage": null,
+  "cost_usd": null,
+  "duration_seconds": null,
+  "catalog_measurement": null,
+  "error": null,
+  "reason": "Illustrative unknown observation; no trial was executed."
+}
