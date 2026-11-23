@@ -1,9 +1,10 @@
 import json
+import os
 import sqlite3
 from pathlib import Path
 
 from fastskillretrieval.agent_index import collect, index_dir, init_index
-from fastskillretrieval.install_agent import MARKER, install, uninstall
+from fastskillretrieval.install_agent import LISTING_MOD, MARKER, PLUGIN_DIRS, install, uninstall
 
 SKILL = "---\nname: {name}\ndescription: {text}\n---\n\n# {name}\n\nUse this to {text}.\n"
 AGENT = (
@@ -109,3 +110,36 @@ def test_install_is_idempotent_and_uninstall_keeps_foreign_entries(tmp_path):
     after = json.loads(settings.read_text("utf-8"))
     assert after["hooks"]["UserPromptSubmit"] == [foreign]
     assert not (home / ".claude" / "commands" / "fsr-init-index.md").exists()
+
+
+def test_install_enables_agent_listing_mod_and_uninstall_removes_it(tmp_path):
+    home = tmp_path / "home"
+    env = {"FSR_HOME": str(tmp_path / "fsr")}
+    settings = home / ".claude" / "settings.json"
+    other = str(tmp_path / "other-mod")
+    _write(settings, json.dumps({"env": {"KEEP_ME": "1", PLUGIN_DIRS: other}}))
+    mod = tmp_path / "fsr" / "mods" / LISTING_MOD
+
+    install("claude", home=home, env=env)
+    (mod / "config.json").write_text('{"mode": "names"}', encoding="utf-8")
+    install("claude", home=home, env=env)
+    block = json.loads(settings.read_text("utf-8"))["env"]
+    assert block["KEEP_ME"] == "1"
+    assert block[PLUGIN_DIRS].split(os.pathsep) == [other, str(mod)]
+    assert (mod / "hooks" / "register.ts").is_file() and (mod / ".claude-plugin" / "plugin.json").is_file()
+    assert not (mod / "hooks" / "register.test.ts").exists()
+    assert (mod / "config.json").read_text(encoding="utf-8") == '{"mode": "names"}'  # user settings survive
+
+    uninstall("claude", home=home, env=env)
+    assert json.loads(settings.read_text("utf-8"))["env"] == {"KEEP_ME": "1", PLUGIN_DIRS: other}
+    assert not mod.exists()
+
+
+def test_install_without_agent_listing_and_codex_leave_env_alone(tmp_path):
+    home = tmp_path / "home"
+    env = {"FSR_HOME": str(tmp_path / "fsr")}
+    install("claude", home=home, env=env)
+    install("claude", home=home, env=env, agent_listing=False)
+    assert "env" not in json.loads((home / ".claude" / "settings.json").read_text("utf-8"))
+    install("codex", home=home, env=env)
+    assert "env" not in json.loads((home / ".codex" / "hooks.json").read_text("utf-8"))

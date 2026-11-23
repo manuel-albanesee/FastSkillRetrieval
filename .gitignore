@@ -17,3 +17,7 @@ htmlcov/
 .serena/
 .claude/
 .icm/
+
+# fsr-agent-listing mod: runtime log and local settings
+src/fastskillretrieval/assets/fsr-agent-listing/listing.jsonl
+src/fastskillretrieval/assets/fsr-agent-listing/config.json

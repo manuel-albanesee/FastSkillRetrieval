@@ -106,11 +106,31 @@ def test_runtime_frontmatter_skill_is_injected_with_declared_limits(tmp_path: Pa
     assert "invoke with the Skill tool" not in ctx
 
 
-def test_agents_stay_names_only(tmp_path: Path) -> None:
+def test_agents_get_description_never_body(tmp_path: Path) -> None:
     _registry(tmp_path, {"agent--k8s-reviewer": "agent"})
     _skill(tmp_path, "agent--k8s-reviewer", "Agent system prompt text.")
     ctx = _context(_run(tmp_path))
     assert "k8s-reviewer (agent)" in ctx and "Agent system prompt text." not in ctx
+    assert "\n- k8s-reviewer: x" in ctx
+
+
+def test_agent_description_once_per_session(tmp_path: Path) -> None:
+    _registry(tmp_path, {"agent--k8s-reviewer": "agent"})
+    _skill(tmp_path, "agent--k8s-reviewer", "Agent system prompt text.")
+    assert "\n- k8s-reviewer: x" in _context(_run(tmp_path))
+    second = _context(_run(tmp_path))
+    assert "k8s-reviewer (agent)" in second and "- k8s-reviewer: x" not in second
+    assert "\n- k8s-reviewer: x" in _context(_run(tmp_path, {"prompt": PROMPT, "session_id": "sess-2"}))
+
+
+def test_agent_block_scalar_description_and_switch_off(tmp_path: Path) -> None:
+    _registry(tmp_path, {"agent--k8s-reviewer": "agent"})
+    folder = tmp_path / "sources" / "claude" / "agent--k8s-reviewer"
+    folder.mkdir(parents=True)
+    (folder / "SKILL.md").write_bytes(b"---\nname: k8s-reviewer\ndescription: >\n  Reviews ingress\n  manifests.\nmodel: haiku\n---\nBody.")
+    assert "\n- k8s-reviewer: Reviews ingress manifests." in _context(_run(tmp_path))
+    off = _context(_run(tmp_path, FSR_AGENT_DESC="off"))
+    assert "k8s-reviewer (agent)" in off and "Reviews ingress" not in off
 
 
 def test_missing_skill_file_falls_back_to_names(tmp_path: Path) -> None:

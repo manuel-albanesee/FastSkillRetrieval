@@ -7,6 +7,7 @@ module adds is recognisable by the marker ``fsr-hook.cjs`` so ``uninstall`` remo
 from __future__ import annotations
 
 import json
+import os
 import shutil
 import sys
 from pathlib import Path
@@ -15,6 +16,30 @@ from .agent_index import fsr_home
 
 MARKER = "fsr-hook.cjs"
 ASSETS = Path(__file__).parent / "assets"
+# Claude Code mod that shrinks the agent listing to the built-in agents (the prompt hook names the relevant
+# others). Loaded through CLAUDE_CODE_PLUGIN_DIRS in the `env` block of ~/.claude/settings.json.
+LISTING_MOD = "fsr-agent-listing"
+PLUGIN_DIRS = "CLAUDE_CODE_PLUGIN_DIRS"
+_MOD_LOCAL = shutil.ignore_patterns("listing.jsonl", "config.json", "*.test.ts", "types")
+
+
+def _plugin_dirs(config: dict, add: Path | None) -> None:
+    """Drop every fsr-agent-listing entry from the env var, then append `add` (if given); other paths stay."""
+    block = config.get("env")
+    if block is None and add is None:
+        return
+    if block is not None and not isinstance(block, dict):
+        raise ValueError("'env' must be an object")
+    block = config.setdefault("env", {}) if block is None else block
+    paths = [p for p in str(block.get(PLUGIN_DIRS, "")).split(os.pathsep) if p and Path(p).name != LISTING_MOD]
+    if add is not None:
+        paths.append(str(add))
+    if paths:
+        block[PLUGIN_DIRS] = os.pathsep.join(paths)
+    else:
+        block.pop(PLUGIN_DIRS, None)
+        if not block:
+            config.pop("env")
 
 COMMAND_BODY = """---
 description: Build or refresh the FastSkillRetrieval index of installed skills, subagents, commands
@@ -78,7 +103,8 @@ def _save(path: Path, config: dict) -> None:
     path.write_text(json.dumps(config, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
 
 
-def install(agent: str, home: Path | None = None, env=None, python: str | None = None) -> dict:
+def install(agent: str, home: Path | None = None, env=None, python: str | None = None,
+            agent_listing: bool = True) -> dict:
     home = home or Path.home()
     config_file, command_file = _targets(agent, home)
     hook = fsr_home(env) / "hooks" / MARKER
@@ -91,6 +117,14 @@ def install(agent: str, home: Path | None = None, env=None, python: str | None =
         {"hooks": [{"type": "command", "command": f'node "{hook}" {agent}', "timeout": 5}]}
     )
     config["hooks"]["UserPromptSubmit"] = entries
+    mod = None
+    if agent == "claude":
+        mod_dir = fsr_home(env) / "mods" / LISTING_MOD
+        if agent_listing:
+            # The user's config.json (mode, keep) in the installed copy survives a reinstall.
+            shutil.copytree(ASSETS / LISTING_MOD, mod_dir, dirs_exist_ok=True, ignore=_MOD_LOCAL)
+            mod = str(mod_dir)
+        _plugin_dirs(config, mod_dir if agent_listing else None)
     _save(config_file, config)
 
     command_file.parent.mkdir(parents=True, exist_ok=True)
@@ -103,6 +137,7 @@ def install(agent: str, home: Path | None = None, env=None, python: str | None =
         "hook": str(hook),
         "config": str(config_file),
         "command": str(command_file),
+        "agent_listing_mod": mod,
         "next": "Run /fsr-init-index in the agent (or `fastskillretrieval init-index --agent "
         f"{agent}`) to build the search index.",
     }
@@ -123,8 +158,11 @@ def uninstall(agent: str, home: Path | None = None, env=None) -> dict:
             config["hooks"].pop("UserPromptSubmit", None)
             if not config["hooks"]:
                 config.pop("hooks")
+        if agent == "claude":
+            _plugin_dirs(config, None)
         _save(config_file, config)
     if command_file.exists():
         command_file.unlink()
     (fsr_home(env) / "hooks" / MARKER).unlink(missing_ok=True)
+    shutil.rmtree(fsr_home(env) / "mods" / LISTING_MOD, ignore_errors=True)
     return {"status": "ok", "agent": agent, "hook_removed": removed}

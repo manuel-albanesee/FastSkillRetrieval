@@ -26,7 +26,7 @@ fastskillretrieval-experiment = "fastskillretrieval.experiment_cli:main"
 where = ["src"]
 
 [tool.setuptools.package-data]
-fastskillretrieval = ["assets/*.cjs"]
+fastskillretrieval = ["assets/*.cjs", "assets/fsr-agent-listing/.claude-plugin/*.json", "assets/fsr-agent-listing/hooks/*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
