@@ -114,6 +114,41 @@ function writeInjected(file, set) {
   } catch { /* dedup is best effort */ }
 }
 
+// One-line `description` from an agent's staged definition (never its body: Claude Code loads that only into the
+// subagent). Needed when the agent listing is compacted to names (fsr-agent-listing mod). '' when unavailable.
+function agentDescription(home, agent, hit) {
+  let raw;
+  try { raw = fs.readFileSync(path.join(home, 'sources', agent, hit.staged, 'SKILL.md'), 'utf8'); } catch { return ''; }
+  const fm = /^﻿?---\r?\n([\s\S]*?)\r?\n---/.exec(raw);
+  if (!fm) return '';
+  const lines = fm[1].split(/\r?\n/);
+  const at = lines.findIndex(l => /^description:/.test(l));
+  if (at < 0) return '';
+  let value = lines[at].replace(/^description:\s*/, '');
+  if (/^[|>][-+]?$/.test(value.trim())) {  // YAML block scalar: the indented lines that follow
+    const block = [];
+    for (const l of lines.slice(at + 1)) { if (!/^\s+\S/.test(l)) break; block.push(l.trim()); }
+    value = block.join(' ');
+  }
+  value = value.trim().replace(/^(['"])([\s\S]*)\1$/, '$2').replace(/\s+/g, ' ');
+  return clip(value, 300).text;
+}
+
+// Each agent is described once per session (key `agent:<name>` in the session file shared with bodies()):
+// the line stays in the conversation, so repeating it would only add tokens.
+function agentBlock(home, agent, hits, event, env) {
+  const flag = String(env.FSR_AGENT_DESC ?? 'on').toLowerCase();
+  if (['off', '0', 'false', 'no'].includes(flag)) return '';
+  const file = sessionFile(home, event.session_id);
+  const seen = readInjected(file);
+  const rows = hits.filter(h => h.kind === 'agent' && !seen.has(`agent:${h.name}`))
+    .map(h => [h.name, agentDescription(home, agent, h)]).filter(([, d]) => d);
+  if (!rows.length) return '';
+  for (const [n] of rows) seen.add(`agent:${n}`);
+  writeInjected(file, seen);
+  return '\nAgents for this request (Agent tool, subagent_type = name):\n' + rows.map(([n, d]) => `- ${n}: ${d}`).join('\n');
+}
+
 // Full SKILL.md text (frontmatter removed, size-capped) for the top hits, once per session.
 function bodies(home, agent, hits, event, env) {
   const native = new Set();
@@ -168,6 +203,7 @@ function run(event, agent, env = process.env) {
     const { out: loaded, native } = bodies(home, agent, hits, event, env);
     let context = `FastSkillRetrieval${indexTag(dir)}: installed tools possibly relevant to this request (use only if they fit): `
       + hits.map(h => `${h.name} (${h.kind}${note(h)})`).join(', ');
+    context += agentBlock(home, agent, hits, event, env);
     if (loaded.length) {
       context += '\nTheir instructions follow; apply them directly instead of calling the Skill tool.\n\n' + loaded.join('\n\n');
     }

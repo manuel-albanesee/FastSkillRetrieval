@@ -107,6 +107,13 @@ def agent_parser() -> argparse.ArgumentParser:
     ):
         command = commands.add_parser(name, help=text)
         command.add_argument("--agent", choices=["claude", "codex"], default="claude")
+        if name == "install":
+            command.add_argument(
+                "--no-agent-listing",
+                dest="agent_listing",
+                action="store_false",
+                help="Keep Claude Code's full agent listing (skip the fsr-agent-listing mod)",
+            )
         if name == "init-index":
             command.add_argument(
                 "--project", type=Path, help="Also index this project's .claude/.codex"
@@ -136,7 +143,7 @@ def agent_main(argv) -> int:
     if args.command == "install":
         from .install_agent import install
 
-        result = install(args.agent)
+        result = install(args.agent, agent_listing=args.agent_listing)
     elif args.command == "uninstall":
         from .install_agent import uninstall
 

@@ -1,0 +1,1 @@
+{ "name": "fsr-agent-listing", "version": "0.1.0", "description": "Shrinks Claude Code's agent listing; FastSkillRetrieval's prompt hook names the agents relevant to each request", "license": "MIT" }
