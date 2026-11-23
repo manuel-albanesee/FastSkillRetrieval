@@ -116,6 +116,10 @@ def agent_parser() -> argparse.ArgumentParser:
                 action="store_true",
                 help="Skip the rebuild when installed skills/agents/commands are unchanged",
             )
+    hide = commands.add_parser(
+        "hide-skills", help="Hide plugin skills from Claude's resident list (FSR injects them instead)"
+    )
+    hide.add_argument("--restore", action="store_true", help="Put every SKILL.md back as it was")
     return result
 
 
@@ -129,6 +133,10 @@ def agent_main(argv) -> int:
         from .install_agent import uninstall
 
         result = uninstall(args.agent)
+    elif args.command == "hide-skills":
+        from .hide_skills import hide, restore
+
+        result = restore() if args.restore else hide()
     else:
         from .agent_index import init_index
 
@@ -144,7 +152,7 @@ def agent_main(argv) -> int:
 
 def main(argv=None) -> int:
     argv = sys.argv[1:] if argv is None else list(argv)
-    if argv and argv[0] in ("install", "uninstall", "init-index"):
+    if argv and argv[0] in ("install", "uninstall", "init-index", "hide-skills"):
         return agent_main(argv)
     args = vars(parser().parse_args(argv))
     source, state = args.pop("source_root"), args.pop("state")
