@@ -116,6 +116,18 @@ def agent_parser() -> argparse.ArgumentParser:
                 action="store_true",
                 help="Skip the rebuild when installed skills/agents/commands are unchanged",
             )
+    hide = commands.add_parser(
+        "hide-skills", help="Hide plugin skills from Claude's resident list (FSR injects them instead)"
+    )
+    hide.add_argument("--restore", action="store_true", help="Put every SKILL.md back as it was")
+    agents = commands.add_parser(
+        "hide-agents", help="Hide plugin agents via Agent(...) deny rules in a settings file"
+    )
+    agents.add_argument("--plugin", dest="plugins", action="append", help="Required unless --restore")
+    agents.add_argument("--keep", action="append", default=[], help="plugin:agent to leave visible")
+    agents.add_argument("--settings", type=Path, help="Default: <cwd>/.claude/settings.json")
+    agents.add_argument("--dry-run", action="store_true")
+    agents.add_argument("--restore", action="store_true", help="Put the settings file back as it was")
     return result
 
 
@@ -129,6 +141,21 @@ def agent_main(argv) -> int:
         from .install_agent import uninstall
 
         result = uninstall(args.agent)
+    elif args.command == "hide-skills":
+        from .hide_skills import hide, restore
+
+        result = restore() if args.restore else hide()
+    elif args.command == "hide-agents":
+        from . import hide_agents
+
+        if args.restore:
+            result = hide_agents.restore(args.settings)
+        else:
+            if not args.plugins:
+                agent_parser().error("hide-agents requires --plugin unless --restore")
+            result = hide_agents.hide(
+                args.plugins, args.settings, keep=args.keep, dry_run=args.dry_run
+            )
     else:
         from .agent_index import init_index
 
@@ -144,7 +171,7 @@ def agent_main(argv) -> int:
 
 def main(argv=None) -> int:
     argv = sys.argv[1:] if argv is None else list(argv)
-    if argv and argv[0] in ("install", "uninstall", "init-index"):
+    if argv and argv[0] in ("install", "uninstall", "init-index", "hide-skills", "hide-agents"):
         return agent_main(argv)
     args = vars(parser().parse_args(argv))
     source, state = args.pop("source_root"), args.pop("state")
