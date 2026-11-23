@@ -6,6 +6,7 @@
 // Usage: node fsr-hook.cjs <agent>
 // Env:   FSR_HOME (default ~/.fsr)   FSR_MODE = inject (default) | suggest (log only) | off
 //        FSR_INJECT_BODY = on (default) | off   FSR_BODY_HITS (default 2)   FSR_BODY_LIMIT bytes per skill (default 8000)
+//        FSR_INJECT_LIMIT total bytes of injected context (default 12000, min 1000)
 //        FSR_GATE_WAIT ms (default 2000)   FSR_GATE_LEASE ms (default 60000)
 // Any problem results in no output: the hook never blocks the prompt.
 const fs = require('node:fs');
@@ -39,7 +40,7 @@ function search(db, query) {
     `SELECT c.name AS name, c.kind AS kind, bm25(capability_fts,${WEIGHTS}) AS score
      FROM capability_fts f JOIN capabilities c ON c.id = f.capability_id
      WHERE capability_fts MATCH ? AND c.status = 'enabled'
-     ORDER BY score LIMIT ?`).all(expression, limit * 3);
+     ORDER BY score, c.name LIMIT ?`).all(expression, limit * 3);
   const best = rows.length ? rows[0].score : 0;
   return rows.filter(r => r.score <= threshold && r.score <= best * relative).slice(0, limit);
 }
@@ -57,7 +58,26 @@ function describe(dir, hit) {
 const BODY_KINDS = new Set(['skill', 'command']);
 
 function stripFrontmatter(text) {
-  return text.replace(/^﻿/, '').replace(/^---\r?\n[\s\S]*?\r?\n---\r?\n?/, '').trim();
+  return text.replace(/^﻿/, '').replace(/^---\r?\n[\s\S]*?\r?\n---\r?\n?/, '').replace(/\r\n?/g, '\n').trim();
+}
+
+// Paths stay absolute (the model reads them) but always use '/', so output does not depend on the platform.
+function posix(p) { return String(p).replaceAll('\\', '/'); }
+
+// Short, stable fingerprint of the index (signature written by init_index); empty when unavailable.
+function indexTag(dir) {
+  try {
+    const sig = JSON.parse(fs.readFileSync(path.join(dir, 'index.json'), 'utf8')).signature;
+    if (typeof sig === 'string' && /^[0-9a-f]{12,}$/i.test(sig)) return ` [index ${sig.slice(0, 12).toLowerCase()}]`;
+  } catch { /* no signature */ }
+  return '';
+}
+
+// Caps the whole additionalContext at `limit` bytes (cut on a UTF-8 boundary, fixed notice appended).
+function capTotal(text, limit) {
+  if (Buffer.byteLength(text, 'utf8') <= limit) return text;
+  const notice = `\n[output truncated at ${limit} bytes]`;
+  return clip(text, limit - Buffer.byteLength(notice, 'utf8')).text + notice;
 }
 
 // Frontmatter keys with a runtime effect that plain injected text cannot reproduce (permissions, model, forked
@@ -116,9 +136,9 @@ function bodies(home, agent, hits, event, env) {
     const body = stripFrontmatter(raw);
     if (!body) continue;
     const { text, cut } = clip(body, limit);
-    out.push(`--- ${hit.kind} ${hit.name} (files in ${skillDir})`
+    out.push(`--- ${hit.kind} ${hit.name} (files in ${posix(skillDir)})`
       + (runtime.length ? ` [declared but not enforced: ${runtime.join(', ')}; stay within them]` : '') + ` ---\n${text}`
-      + (cut ? `\n[truncated at ${limit} bytes; read ${path.join(skillDir, 'SKILL.md')} for the rest]` : ''));
+      + (cut ? `\n[truncated at ${limit} bytes; read ${posix(path.join(skillDir, 'SKILL.md'))} for the rest]` : ''));
     seen.add(hit.name);
   }
   if (out.length) writeInjected(file, seen);
@@ -146,12 +166,13 @@ function run(event, agent, env = process.env) {
     if (!hits.length) return null;
     const note = h => (native.has(h.name) ? ', invoke with the Skill tool' : '');
     const { out: loaded, native } = bodies(home, agent, hits, event, env);
-    let context = 'FastSkillRetrieval: installed tools possibly relevant to this request (use only if they fit): '
+    let context = `FastSkillRetrieval${indexTag(dir)}: installed tools possibly relevant to this request (use only if they fit): `
       + hits.map(h => `${h.name} (${h.kind}${note(h)})`).join(', ');
     if (loaded.length) {
       context += '\nTheir instructions follow; apply them directly instead of calling the Skill tool.\n\n' + loaded.join('\n\n');
     }
-    return { hookSpecificOutput: { hookEventName: 'UserPromptSubmit', additionalContext: context } };
+    const injectLimit = Math.max(1000, Number.parseInt(env.FSR_INJECT_LIMIT ?? '12000', 10) || 12000);
+    return { hookSpecificOutput: { hookEventName: 'UserPromptSubmit', additionalContext: capTotal(context, injectLimit) } };
   } catch { return null; } finally { try { db?.close(); } catch { /* ignore */ } }
 }
 
