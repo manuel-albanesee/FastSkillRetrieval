@@ -1,4 +1,4 @@
-"""hide-skills: plugin SKILL.md files get disable-model-invocation, and restore is byte-exact."""
+"""hide-skills: plugin skills and commands get disable-model-invocation, and restore is byte-exact."""
 from __future__ import annotations
 
 import json
@@ -13,6 +13,10 @@ FILES = {
     "done": "---\nname: done\ndisable-model-invocation: true\n---\nBody\n",
     "bare": "No frontmatter\n",
 }
+COMMANDS = {
+    "with": "---\ndescription: c\n---\nDo it\n",
+    "without": "Do it\n",
+}
 
 
 def _setup(tmp_path: Path):
@@ -22,6 +26,9 @@ def _setup(tmp_path: Path):
         directory = install / "skills" / name
         directory.mkdir(parents=True)
         (directory / "SKILL.md").write_bytes(text.encode())
+    (install / "commands").mkdir()
+    for name, text in COMMANDS.items():
+        (install / "commands" / f"{name}.md").write_bytes(text.encode())
     config = home / ".claude" / "plugins"
     config.mkdir(parents=True)
     (config / "installed_plugins.json").write_text(
@@ -31,12 +38,17 @@ def _setup(tmp_path: Path):
 
 def test_hide_then_restore_is_exact_and_idempotent(tmp_path: Path) -> None:
     home, env, install = _setup(tmp_path)
-    assert hide(home, env)["hidden"] == 3
+    assert hide(home, env)["hidden"] == 5
     assert hide(home, env)["hidden"] == 0
     for name in ("plain", "crlf", "false", "done"):
         assert "disable-model-invocation: true" in (install / "skills" / name / "SKILL.md").read_text()
     assert (install / "skills" / "crlf" / "SKILL.md").read_bytes().count(b"\r\n") == 6
     assert (install / "skills" / "bare" / "SKILL.md").read_text() == FILES["bare"]
-    assert restore(home, env)["restored"] == 3
+    assert (install / "commands" / "with.md").read_text().count("disable-model-invocation: true") == 1
+    assert (install / "commands" / "without.md").read_text() == (
+        "---\ndisable-model-invocation: true\n---\nDo it\n")
+    assert restore(home, env)["restored"] == 5
     for name, text in FILES.items():
         assert (install / "skills" / name / "SKILL.md").read_bytes() == text.encode()
+    for name, text in COMMANDS.items():
+        assert (install / "commands" / f"{name}.md").read_bytes() == text.encode()

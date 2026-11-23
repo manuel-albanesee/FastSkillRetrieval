@@ -32,11 +32,17 @@ def _installs(home: Path) -> list[Path]:
     return found
 
 
-def _patched(text: str) -> str | None:
-    """Return the text with the key set, or None when it is already true or has no frontmatter."""
+def _patched(text: str, command: bool = False) -> str | None:
+    """Return the text with the key set, or None when it is already true or has no frontmatter.
+
+    A command file without frontmatter gets a minimal one; a skill without it is left alone.
+    """
     match = _FRONT.match(text)
     if not match:
-        return None
+        if not command:
+            return None
+        newline = "\r\n" if "\r\n" in text else "\n"
+        return f"---{newline}{KEY}: true{newline}---{newline}{text}"
     head, newline, body, tail = match.groups()
     if _TRUE.search(body):
         return None
@@ -52,9 +58,11 @@ def hide(home: Path | None = None, env=None) -> dict:
     changed = untouched = 0
     store.mkdir(parents=True, exist_ok=True)
     for root in _installs(home):
-        for file in sorted(root.glob("**/skills/*/SKILL.md")):
+        files = [(f, False) for f in root.glob("**/skills/*/SKILL.md")]
+        files += [(f, True) for f in root.glob("**/commands/*.md")]
+        for file, command in sorted(files):
             raw = file.read_bytes()
-            new = _patched(raw.decode("utf-8", errors="replace"))
+            new = _patched(raw.decode("utf-8", errors="replace"), command)
             if new is None:
                 untouched += 1
                 continue
