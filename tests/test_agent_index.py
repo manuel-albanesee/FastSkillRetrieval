@@ -3,7 +3,7 @@ import os
 import sqlite3
 from pathlib import Path
 
-from fastskillretrieval.agent_index import collect, index_dir, init_index
+from fastskillretrieval.agent_index import collect, focus, index_dir, init_index
 from fastskillretrieval.install_agent import LISTING_MOD, MARKER, PLUGIN_DIRS, install, uninstall
 
 SKILL = "---\nname: {name}\ndescription: {text}\n---\n\n# {name}\n\nUse this to {text}.\n"
@@ -73,6 +73,36 @@ def test_init_index_builds_searchable_registry(tmp_path):
     assert row == ("gradle-helper",)
     mapping = json.loads((index_dir("claude", env) / "sources.json").read_text("utf-8"))
     assert mapping["agent--reviewer"]["name"] == "demo:reviewer"
+
+
+def test_focus_reads_the_name():
+    assert focus("agent--typescript-reviewer") == "typescript reviewer (review reviewe)"
+    assert focus("cmd--go-build") == "go build"
+    assert focus("agent--java-build-resolver--plugin-ecc") == "java build resolver (resolv resolve)"
+
+
+def test_index_prefixes_descriptions_with_the_name(tmp_path):
+    # Ranking on a real index is measured by scripts/hook_eval.cjs; here: the name words are indexed
+    # at the head of the weighted columns, so a name-matching definition gains on "review typescript".
+    home = tmp_path / "home"
+    plugin = tmp_path / "plugins" / "demo"
+    _write(
+        home / ".claude" / "plugins" / "installed_plugins.json",
+        json.dumps({"plugins": {"demo@market": [{"installPath": str(plugin)}]}}),
+    )
+    _write(
+        plugin / "agents" / "typescript-reviewer.md",
+        "---\nname: typescript-reviewer\ndescription: Expert code reviewer for type safety, "
+        "async correctness and idiomatic patterns in diffs\n---\nReview.\n",
+    )
+    env = {"FSR_HOME": str(tmp_path / "fsr")}
+    init_index("claude", home=home, env=env)
+    with sqlite3.connect(index_dir("claude", env) / "registry.sqlite3") as db:
+        row = db.execute(
+            "SELECT f.description, f.use_when FROM capability_fts f JOIN capabilities c "
+            "ON c.id = f.capability_id WHERE c.name = 'agent--typescript-reviewer'"
+        ).fetchone()
+    assert all(column.startswith("typescript reviewer review reviewe expert") for column in row)
 
 
 def test_if_stale_skips_unchanged_and_rebuilds_on_change(tmp_path):

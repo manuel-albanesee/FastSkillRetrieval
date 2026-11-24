@@ -133,6 +133,38 @@ def test_agent_block_scalar_description_and_switch_off(tmp_path: Path) -> None:
     assert "k8s-reviewer (agent)" in off and "Reviews ingress" not in off
 
 
+def _custom_registry(home: Path, rows: dict[str, str]) -> None:
+    """rows: staged skill name -> indexed description text, over the usual filler corpus."""
+    _registry(home, {})
+    db = sqlite3.connect(home / "index" / "claude" / "registry.sqlite3")
+    for name, text in rows.items():
+        db.execute("INSERT INTO capabilities VALUES(?,?,?,?)", (name, name, "skill", "enabled"))
+        db.execute("INSERT INTO capability_fts VALUES(?,?,?,?,?,?)", (name, text, text, "", "", ""))
+    db.commit()
+    db.close()
+
+
+def test_bare_numbers_never_match(tmp_path: Path) -> None:
+    _custom_registry(tmp_path, {"rails-patterns": "rails 7 8 framework patterns"})
+    _skill(tmp_path, "rails-patterns", "Rails body.")
+    prompt = "context shows 85 agents and 7.3 thousand tokens, system tools still 23.8"
+    assert _run(tmp_path, {"prompt": prompt, "session_id": "s"}) is None
+
+
+def test_weak_coverage_hit_is_named_without_body(tmp_path: Path) -> None:
+    _custom_registry(tmp_path, {"k8s-review": "kubernetes ingress manifest"})
+    _skill(tmp_path, "k8s-review", "Check probes and limits.")
+    weak = ("kubernetes ingress question while chatting about lunch weather trains music books "
+            "gardens painting cooking holidays football")
+    ctx = _context(_run(tmp_path, {"prompt": weak, "session_id": "s1"}))
+    assert "k8s-review (skill)" in ctx and "Check probes and limits." not in ctx
+    strong = _context(_run(tmp_path, {"prompt": "kubernetes ingress manifest review", "session_id": "s2"}))
+    assert "Check probes and limits." in strong
+    # The threshold is tunable; 0 turns the old behaviour (body for every hit) back on.
+    loose = _context(_run(tmp_path, {"prompt": weak, "session_id": "s3"}, FSR_STRONG_COVERAGE="0"))
+    assert "Check probes and limits." in loose
+
+
 def test_missing_skill_file_falls_back_to_names(tmp_path: Path) -> None:
     _registry(tmp_path, {"k8s-review": "skill"})
     assert "k8s-review (skill)" in _context(_run(tmp_path))

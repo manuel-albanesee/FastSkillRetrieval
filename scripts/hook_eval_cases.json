@@ -1,0 +1,27 @@
+{
+  "_comment": "Labelled prompts for scripts/hook_eval.cjs. expect: staged index names, any of which is a correct hit; [] means nothing should be injected. Names refer to the maintainer's installed set; edit to match yours.",
+  "cases": [
+    {"prompt": "fix the gradle build failure in the spring boot project", "expect": ["agent--ecc-java-build-resolver", "agent--java-build-resolver"]},
+    {"prompt": "nel progetto spring boot la build gradle fallisce dopo l'aggiornamento delle dipendenze, analizza il log e correggi l'errore di compilazione senza toccare altro", "expect": ["agent--ecc-java-build-resolver", "agent--java-build-resolver"]},
+    {"prompt": "review this typescript diff for security issues", "expect": ["agent--ecc-typescript-reviewer", "agent--typescript-reviewer", "agent--security-reviewer"]},
+    {"prompt": "cerca nel codice tutte le occorrenze di sessionFile e dimmi dove viene chiamata", "expect": ["agent--ricerca-haiku"]},
+    {"prompt": "write pytest tests for the parser module", "expect": ["python-testing", "agent--tdd-guide", "agent--ecc-tdd-guide", "tdd-workflow"]},
+    {"prompt": "optimize this slow postgres query with an index", "expect": ["postgres-patterns", "agent--database-reviewer"]},
+    {"prompt": "review my react component for hook correctness", "expect": ["agent--react-reviewer", "cmd--react-review"]},
+    {"prompt": "write a kubernetes deployment manifest with liveness probes", "expect": ["kubernetes-patterns"]},
+    {"prompt": "create a Dockerfile with a multi-stage build for the node service", "expect": ["docker-patterns"]},
+    {"prompt": "deploy a worker on cloudflare with wrangler", "expect": ["wrangler", "workers-development", "workers-best-practices", "cloudflare"]},
+    {"prompt": "review the rust code for ownership and lifetime problems", "expect": ["agent--rust-reviewer", "cmd--rust-review"]},
+    {"prompt": "scrivi un messaggio di commit conventional per le modifiche staged", "expect": ["agent--commit-reviewer", "conventional-commit-review", "cmd--prp-commit"]},
+    {"prompt": "fix the go build errors and go vet warnings", "expect": ["agent--go-build-resolver", "cmd--go-build"]},
+    {"prompt": "add end-to-end playwright tests for the login flow", "expect": ["e2e-testing", "agent--e2e-runner"]},
+    {"prompt": "review the django migration for safety", "expect": ["agent--django-reviewer", "django-patterns"]},
+    {"prompt": "valuta questa decisione architetturale ad alto impatto prima di procedere", "expect": ["agent--decisione-opus", "decisione", "architecture-decision-records"]},
+    {"prompt": "Che abbiamo fatto adesso l'abbiamo fatta sugli agent, vero? Perché per agent se lancio il comando context mi dà 85 agents e 7.3 mila tokens, mentre per quanto riguarda i system tools mi dà ancora 23.8 mila tokens.", "expect": []},
+    {"prompt": "quindi quanti token risparmio inviando sempre una lista diversa che comprende solo 1 o 2 agent scelti da fsr ?", "expect": []},
+    {"prompt": "fallo, ma spiegami meglio come funziona il contatore dei subagent e come influisce sui token", "expect": []},
+    {"prompt": "Quindi il comando per installare è lo stesso di prima.", "expect": []},
+    {"prompt": "dimmi di più su questa soluzione", "expect": []},
+    {"prompt": "ciao, come va oggi?", "expect": []}
+  ]
+}
