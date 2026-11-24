@@ -181,8 +181,25 @@ def stage(sources: list[Source], root: Path) -> dict[str, dict]:
     return staged
 
 
+def focus(folder: str) -> str:
+    """What a staged definition is, read from its name: 'agent--typescript-reviewer' ->
+    'typescript reviewer (review reviewe)'. Agent-noun words also get their verb forms, because requests
+    say "review"/"resolve" while names say "reviewer"/"resolver"; a form nobody types is harmless."""
+    name = folder.removeprefix(PREFIX["agent"]).removeprefix(PREFIX["command"]).split("--")[0]
+    words = [w.lower() for w in re.split(r"[^A-Za-z0-9]+", name) if w]
+    verbs: list[str] = []
+    for word in words:
+        if len(word) >= 6 and word.endswith(("er", "or")):
+            verbs += [form for form in (word[:-2], word[:-1]) if form not in words + verbs]
+    return " ".join(words) + (f" ({' '.join(verbs)})" if verbs else "")
+
+
 def _candidate(root: Path, item: dict) -> dict:
-    """Bounded candidate metadata derived from the definition itself, without a model."""
+    """Bounded candidate metadata derived from the definition itself, without a model.
+
+    The description is prefixed with the name's own words (see ``focus``): a definition whose name says
+    what it is ranks above one that merely mentions the same technology in a long description, and the
+    prefix stays inside the first indexed tokens of every column."""
     source = root / item["name"] / "SKILL.md"
     parsed = parse_definition(source, "skill")
     body = parsed["definition"]["body"]
@@ -194,6 +211,9 @@ def _candidate(root: Path, item: dict) -> dict:
         description = source.read_text(encoding="utf-8").replace("\n", " ").strip()[:1000]
     if len(description) < 40:
         raise ValueError("source_description_too_short")
+    label = focus(item["name"])
+    if label:
+        description = f"{label}: {description}"
     return {
         "description": description[:1000],
         "aliases": [item["name"]],

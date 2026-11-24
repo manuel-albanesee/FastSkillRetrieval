@@ -7,6 +7,8 @@
 // Env:   FSR_HOME (default ~/.fsr)   FSR_MODE = inject (default) | suggest (log only) | off
 //        FSR_INJECT_BODY = on (default) | off   FSR_BODY_HITS (default 2)   FSR_BODY_LIMIT bytes per skill (default 8000)
 //        FSR_INJECT_LIMIT total bytes of injected context (default 12000, min 1000)
+//        FSR_STRONG_COVERAGE share of request terms a hit must match for its text to be injected (default 0.3)
+//        FSR_STRONG_CAP max request terms counted for that share (default 12)
 //        FSR_GATE_WAIT ms (default 2000)   FSR_GATE_LEASE ms (default 60000)
 // Any problem results in no output: the hook never blocks the prompt.
 const fs = require('node:fs');
@@ -22,27 +24,48 @@ these those into about my your our their please can you i me it do does how what
 const ELISION = /\b(?:c|l|d|dov|cos|com|quell|quest|dell|all|dall|nell|sull|un|anch)['’](?=[\p{L}\p{N}_])/gu;
 const WEIGHTS = '0,5,4,4,3,2'; // capability_id, description, capabilities, use_when, aliases, technologies
 const LIMITS = { threshold: -12, relative: 0.6, limit: 3, minTerms: 2 };
+// A hit is "strong" (its full text may be injected) only when it matches at least `minMatched` distinct request
+// terms covering `coverage` of them, counted against at most `cap` terms so long requests are not penalised.
+// Weaker hits are still named: a false positive then costs a few tokens instead of a whole SKILL.md.
+// Tuned with scripts/hook_eval.cjs (best body recall with no injection on the negative prompts).
+const STRONG = { minMatched: 2, coverage: 0.3, cap: 12 };
 
 function queryTerms(text) {
   let v = String(text).normalize('NFC').toLowerCase().replace(ELISION, ' ');
   v = v.replace(/\bc\+\+/g, ' cpp ').replace(/\bc#/g, ' csharp ');
   const seen = new Set();
-  for (const t of v.match(/[\p{L}\p{N}]+/gu) || []) if (!STOP.has(t)) seen.add(t);
+  // Bare numbers ("7.3k tokens", "85 agents") match version strings in unrelated skills.
+  for (const t of v.match(/[\p{L}\p{N}]+/gu) || []) if (!STOP.has(t) && !/^\p{N}+$/u.test(t)) seen.add(t);
   return [...seen].slice(0, 64);
 }
+
+function quoted(term) { return `"${term.replaceAll('"', '')}"`; }
 
 function search(db, query) {
   const { threshold, relative, limit, minTerms } = LIMITS;
   const terms = queryTerms(query);
   if (terms.length < minTerms) return [];
-  const expression = terms.map(t => `"${t.replaceAll('"', '')}"`).join(' OR ');
   const rows = db.prepare(
-    `SELECT c.name AS name, c.kind AS kind, bm25(capability_fts,${WEIGHTS}) AS score
+    `SELECT f.capability_id AS id, c.name AS name, c.kind AS kind, bm25(capability_fts,${WEIGHTS}) AS score
      FROM capability_fts f JOIN capabilities c ON c.id = f.capability_id
      WHERE capability_fts MATCH ? AND c.status = 'enabled'
-     ORDER BY score, c.name LIMIT ?`).all(expression, limit * 3);
+     ORDER BY score, c.name LIMIT ?`).all(terms.map(quoted).join(' OR '), limit * 3);
   const best = rows.length ? rows[0].score : 0;
-  return rows.filter(r => r.score <= threshold && r.score <= best * relative).slice(0, limit);
+  const hits = rows.filter(r => r.score <= threshold && r.score <= best * relative).slice(0, limit);
+  const probe = db.prepare('SELECT 1 FROM capability_fts WHERE capability_fts MATCH ? AND capability_id = ?');
+  for (const hit of hits) {
+    hit.matched = terms.filter(t => probe.get(quoted(t), hit.id)).length;
+    hit.terms = terms.length;
+  }
+  return hits;
+}
+
+function strong(hit, env = {}) {
+  const coverage = Number.parseFloat(env.FSR_STRONG_COVERAGE ?? '');
+  const cap = Number.parseInt(env.FSR_STRONG_CAP ?? '', 10);
+  const need = Number.isFinite(coverage) ? coverage : STRONG.coverage;
+  return hit.matched >= STRONG.minMatched
+    && hit.matched / Math.min(hit.terms, cap > 0 ? cap : STRONG.cap) >= need;
 }
 
 function describe(dir, hit) {
@@ -50,9 +73,10 @@ function describe(dir, hit) {
   try {
     const map = JSON.parse(fs.readFileSync(path.join(dir, 'sources.json'), 'utf8'));
     const entry = map[hit.name];
-    if (entry) return { name: entry.name, kind: entry.kind, staged: hit.name };
+    if (entry) return { name: entry.name, kind: entry.kind, staged: hit.name, matched: hit.matched, terms: hit.terms };
   } catch { /* fall through */ }
-  return { name: hit.name.replace(/^(?:agent|cmd)--/, ''), kind: hit.kind, staged: hit.name };
+  return { name: hit.name.replace(/^(?:agent|cmd)--/, ''), kind: hit.kind, staged: hit.name, matched: hit.matched,
+    terms: hit.terms };
 }
 
 const BODY_KINDS = new Set(['skill', 'command']);
@@ -167,7 +191,7 @@ function bodies(home, agent, hits, event, env) {
     // Skills are hidden from Claude's own list (see hide_skills.py), so every one is injected here. Frontmatter
     // fields that only Claude Code could enforce are declared in the header instead.
     const runtime = runtimeKeys(raw);
-    if (i >= maxHits || seen.has(hit.name)) continue;
+    if (i >= maxHits || seen.has(hit.name) || !strong(hit, env)) continue;
     const body = stripFrontmatter(raw);
     if (!body) continue;
     const { text, cut } = clip(body, limit);
@@ -220,4 +244,4 @@ function main() {
   if (out) process.stdout.write(JSON.stringify(out));
 }
 if (require.main === module) main();
-module.exports = { queryTerms, search, run };
+module.exports = { queryTerms, search, strong, run, STRONG };
