@@ -186,7 +186,10 @@ fastskillretrieval init-index --agent claude --if-stale
 - `install` registra l'hook in `~/.claude/settings.json` (Codex: `~/.codex/hooks.json`), aggiunge
   `/fsr-init-index` e costruisce l'indice; `--no-index` salta la costruzione. È idempotente, conserva
   un solo `.fsr-backup` e `uninstall` rimuove soltanto ciò che ha creato. Codex chiede di
-  approvare l'hook una volta da `/hooks`.
+  approvare l'hook una volta da `/hooks`. Dopo l'installazione, alla prima sessione (Codex: al
+  primo prompt) l'hook mostra una sola volta, solo all'utente e senza costo in token, un avviso
+  in chat: FSR è installato e bisogna eseguire `/fsr-init-index` per attivare l'iniezione
+  automatica di agent e skill. `FSR_MODE=off` lo sopprime.
 - `init-index` indicizza skill, agent e comandi utente, di progetto e dei plugin attivi, copiati
   in `~/.fsr/sources/<agent>/`; il registro va in `~/.fsr/index/<agent>/`. Con `--if-stale` non
   ricostruisce se l'insieme installato è invariato. Nessun modello viene chiamato.
@@ -194,6 +197,15 @@ fastskillretrieval init-index --agent claude --if-stale
   solo per i match **forti** (copertura dei termini della richiesta almeno `FSR_STRONG_COVERAGE`,
   0,3 di default); i match deboli sono solo nominati. Il nome della definizione pesa nel ranking e i
   token puramente numerici della richiesta sono ignorati.
+- Lingua: FSR non traduce nomi né descrizioni. L'hook aggiunge alla sola ricerca i termini inglesi
+  equivalenti alle parole italiane della richiesta (`semplifica` aggiunge `simplify`), senza
+  contarli nella copertura dei match forti, così gli agent descritti in inglese si trovano da
+  richieste in italiano.
+- Agent: una seconda query limitata agli agent aggiunge fino a due agent che i primi tre risultati
+  globali avrebbero escluso (stessa soglia assoluta). Prima dell'indicizzazione `agent_quality.py`
+  (deterministico, senza modelli) ripulisce le descrizioni e aggiunge agli *alias* i termini
+  dell'altra lingua e radici inglesi leggere, senza toccare la descrizione; la versione delle
+  regole fa parte della firma dell'indice, quindi `--if-stale` ricostruisce dopo una modifica.
 - Il mod `fsr-agent-listing` riduce l'elenco degli agent di Claude Code ai soli integrati; la
   descrizione degli agent pertinenti è iniettata una volta per sessione. `--no-agent-listing`
   lo disattiva. Gli agent esclusi dall'elenco restano invocabili per nome.
@@ -205,7 +217,9 @@ fastskillretrieval init-index --agent claude --if-stale
   `FSR_BODY_HITS`, `FSR_BODY_LIMIT`, `FSR_INJECT_LIMIT`, `FSR_STRONG_COVERAGE`, `FSR_STRONG_CAP`,
   `FSR_AGENT_DESC`, `FSR_UI`. Valori predefiniti nel [README](../README.md).
 - `scripts/hook_eval.cjs` esegue richieste etichettate (`scripts/hook_eval_cases.json`) per
-  tarare le soglie. Un hook in errore non produce output e non blocca mai il prompt.
+  tarare le soglie; `scripts/agent_eval.cjs [casi.json] [--verbose]` misura recall@3, top-1 e
+  falsi positivi sugli agent (i casi in `scripts/agent_eval_cases.json` usano gli agent della
+  macchina del maintainer: adattali ai tuoi). Un hook in errore non produce output e non blocca mai il prompt.
 
 ## Capability Retrieval v0.2 (opt-in)
 
