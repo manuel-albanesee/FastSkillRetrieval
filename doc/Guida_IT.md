@@ -33,7 +33,8 @@ $python = (Resolve-Path .venv/Scripts/python.exe).Path
 & $python -m fastskillretrieval --help
 ```
 
-L'ambiente `.venv` è locale al repository. Non occorrono installazioni globali né un remoto Git.
+L'ambiente `.venv` è locale al repository. Non occorrono installazioni globali; il repository pubblico è su GitHub
+(`manuel-albanesee/FastSkillRetrieval`).
 L'entry point installato `fastskillretrieval` chiama lo stesso ingresso di
 `python -m fastskillretrieval`. Su questa macchina Windows il launcher `.exe` generato
 ha ricevuto `Accesso negato`; l'avvio verificato è tramite `python -m`, usato in tutti
@@ -171,6 +172,40 @@ frontmatter e sostituzioni dinamiche non sono supportati: la preparazione li blo
 di simulare l'invocazione nativa. Il controllo è prudenziale e non un parser completo di ogni
 estensione futura. Una sorgente ostile resta dato non attendibile; la sessione host conserva
 i propri strumenti e permessi.
+
+## Integrazione con Claude Code e Codex (hook di prompt)
+
+Oltre al server MCP, FSR può suggerire strumenti installati prima che la richiesta arrivi al
+modello, con un hook `UserPromptSubmit` in sola lettura (richiede Node.js 22.5 o successivo).
+
+```powershell
+fastskillretrieval install --agent claude      # oppure --agent codex
+fastskillretrieval init-index --agent claude --if-stale
+```
+
+- `install` registra l'hook in `~/.claude/settings.json` (Codex: `~/.codex/hooks.json`), aggiunge
+  `/fsr-init-index` e costruisce l'indice; `--no-index` salta la costruzione. È idempotente, conserva
+  un solo `.fsr-backup` e `uninstall` rimuove soltanto ciò che ha creato. Codex chiede di
+  approvare l'hook una volta da `/hooks`.
+- `init-index` indicizza skill, agent e comandi utente, di progetto e dei plugin attivi, copiati
+  in `~/.fsr/sources/<agent>/`; il registro va in `~/.fsr/index/<agent>/`. Con `--if-stale` non
+  ricostruisce se l'insieme installato è invariato. Nessun modello viene chiamato.
+- L'hook nomina fino a tre risultati. Il testo completo di una skill o di un comando è iniettato
+  solo per i match **forti** (copertura dei termini della richiesta almeno `FSR_STRONG_COVERAGE`,
+  0,3 di default); i match deboli sono solo nominati. Il nome della definizione pesa nel ranking e i
+  token puramente numerici della richiesta sono ignorati.
+- Il mod `fsr-agent-listing` riduce l'elenco degli agent di Claude Code ai soli integrati; la
+  descrizione degli agent pertinenti è iniettata una volta per sessione. `--no-agent-listing`
+  lo disattiva. Gli agent esclusi dall'elenco restano invocabili per nome.
+- `hide-skills [--restore]` imposta `disable-model-invocation: true` sulle skill dei plugin, con
+  ripristino esatto; va rilanciato dopo un aggiornamento dei plugin. `hide-agents --plugin NOME
+  [--keep plugin:agent] [--dry-run] [--restore]` scrive regole `Agent(...)` in `permissions.deny`
+  con backup byte per byte.
+- Variabili: `FSR_HOME`, `FSR_MODE` (`inject`, `suggest`, `off`), `FSR_INJECT_BODY`,
+  `FSR_BODY_HITS`, `FSR_BODY_LIMIT`, `FSR_INJECT_LIMIT`, `FSR_STRONG_COVERAGE`, `FSR_STRONG_CAP`,
+  `FSR_AGENT_DESC`, `FSR_UI`. Valori predefiniti nel [README](../README.md).
+- `scripts/hook_eval.cjs` esegue richieste etichettate (`scripts/hook_eval_cases.json`) per
+  tarare le soglie. Un hook in errore non produce output e non blocca mai il prompt.
 
 ## Capability Retrieval v0.2 (opt-in)
 
