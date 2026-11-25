@@ -140,6 +140,8 @@ def install(agent: str, home: Path | None = None, env=None, python: str | None =
     command_file.write_text(
         COMMAND_BODY.format(python=python or sys.executable, agent=agent), encoding="utf-8"
     )
+    # One-time notice for the user: the hook shows it in the agent's chat, then deletes this file.
+    (fsr_home(env) / f"installed-{agent}").write_text("run /fsr-init-index\n", encoding="utf-8")
     return {
         "status": "ok",
         "agent": agent,
@@ -175,5 +177,6 @@ def uninstall(agent: str, home: Path | None = None, env=None) -> dict:
     if command_file.exists():
         command_file.unlink()
     (fsr_home(env) / "hooks" / MARKER).unlink(missing_ok=True)
+    (fsr_home(env) / f"installed-{agent}").unlink(missing_ok=True)
     shutil.rmtree(fsr_home(env) / "mods" / LISTING_MOD, ignore_errors=True)
     return {"status": "ok", "agent": agent, "hook_removed": removed}

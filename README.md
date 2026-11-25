@@ -82,6 +82,10 @@ fastskillretrieval install --agent claude      # or: --agent codex
 | `hide-skills [--restore]` | Marks plugin skills `disable-model-invocation: true`, so the resident skill list shrinks and FSR is the way they reach the model. Original bytes are saved and `--restore` is exact. Run it again after a plugin update. |
 | `hide-agents --plugin NAME [--keep plugin:agent] [--dry-run] [--restore]` | Writes `Agent(plugin:agent)` deny rules into the settings file, with a byte-exact backup. |
 
+After installing, the first session (Codex: the first prompt) shows a one-time notice in the
+agent's chat, for you only and at no token cost: FSR is installed and you should run
+`/fsr-init-index` to enable the automatic, per-request injection of agents and skills.
+
 Codex requires you to trust the new hook once from its `/hooks` screen.
 
 ### What the hook injects
@@ -116,6 +120,24 @@ Codex requires you to trust the new hook once from its `/hooks` screen.
 
 `scripts/hook_eval.cjs` replays labelled prompts (`scripts/hook_eval_cases.json`) against your
 index to tune the strong-match thresholds.
+
+### Agent retrieval quality
+
+Agents compete with hundreds of skills and commands, and their descriptions are often short or
+written in one language only. Two measures keep them findable:
+
+- **Italian-to-English query expansion.** The hook adds the English equivalents of Italian
+  request terms (`semplifica` adds `simplify`) to the search only, so descriptions written in
+  English are found from Italian requests. The expansion never counts toward strong-match coverage.
+- **Reserved agent slots.** The hook runs a second query limited to agents and adds up to two
+  that the global top three left out, with the same absolute threshold.
+- **Description check before indexing** (`agent_quality.py`, deterministic, no model). It strips
+  corrupt characters and adds the other language's glossary terms and light English stems to the
+  agent's *aliases*, never to its description, so skill ranking is unaffected. The check version is
+  part of the index signature, so `init-index --if-stale` rebuilds after a rule change.
+
+`scripts/agent_eval.cjs [cases.json] [--verbose]` measures recall@3, top-1 and false positives
+(`scripts/agent_eval_cases.json` lists agents installed on the maintainer's machine; adapt it to yours).
 
 Used by [Caronte](https://github.com/manuel-albanesee/Caronte), which installs it automatically.
 
@@ -159,7 +181,7 @@ uv run python -m pytest -q
 uv run ruff check src tests
 ```
 
-Current status: 368 passed, 1 skipped (the skipped test is platform-specific).
+Current status: 384 passed, 1 skipped (the skipped test is platform-specific).
 
 ## Project layout
 

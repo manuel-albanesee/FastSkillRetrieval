@@ -40,19 +40,74 @@ function queryTerms(text) {
   return [...seen].slice(0, 64);
 }
 
+// Italian request words -> English index terms (the indexed descriptions are mostly English; FTS5 has no stemming
+// or translation). A key ending in '*' is a prefix, otherwise an exact word. Deterministic, no model involved.
+const EXPAND = new Map(Object.entries({
+  'semplific*': 'simplify simplifier simplification', 'semplice': 'simple simplify', 'complicat*': 'complex complicated',
+  'progett*': 'design architect', 'architettur*': 'architecture design architect',
+  'rete reti': 'network connectivity', 'connettivit*': 'connectivity network troubleshoot',
+  'diagnos* diagnostic*': 'diagnose troubleshoot diagnostic', 'libreria librerie': 'library libraries docs',
+  'lent*': 'slow performance', 'prestazion*': 'performance slow optimize', 'bottiglia': 'bottleneck performance',
+  'colli': 'bottleneck', 'compil*': 'build compile compilation', 'errore errori': 'error errors fix',
+  'pulisc* pulizi*': 'clean cleanup', 'mort* inutilizz*': 'dead unused cleanup',
+  'spieg*': 'explain understand', 'esistent*': 'existing codebase', 'esplor*': 'explore codebase',
+  'memoria': 'memory', 'caricament*': 'loading load', 'carico': 'load',
+  'sicurezza': 'security vulnerability', 'vulnerabil*': 'vulnerability security', 'segret*': 'secret secrets security',
+  'revision*': 'review', 'rivedi rivedere': 'review', 'controll*': 'review check',
+  'ottimizz*': 'optimize optimization performance', 'ricerca': 'search find', 'cerc*': 'search find',
+  'trov* trovare': 'find search', 'flusso flussi': 'flow trace', 'traccia': 'trace flow',
+  'sessione sessioni': 'session sessions', 'dipendenz*': 'dependencies dependency', 'documentazion*': 'documentation docs',
+  'pianific*': 'plan planning', 'piano piani': 'plan planning', 'ristruttur*': 'refactor refactoring',
+  'implement*': 'implement implementation', 'aggiorn*': 'update updated latest', 'codice': 'code',
+  'comportament*': 'behavior behaviour', 'notific*': 'notification notifications', 'servizio servizi': 'service services',
+  'sito': 'website web', 'progetto': 'project', 'guidat*': 'driven tdd', 'sviluppo': 'development develop',
+  'correggi correggere': 'fix correct', 'fallisce fallire': 'fail failing failure',
+  'esempio esempi': 'example examples', 'migliora*': 'improve', 'sicuro': 'secure safe',
+  'dati': 'data', 'database': 'database db', 'distribuzion*': 'deploy deployment', 'rilascio': 'release deploy',
+}).flatMap(([keys, en]) => keys.split(' ').map(k => [k, en.split(' ')])));
+const EXPAND_CAP = 24;
+
+// English terms to add for the Italian words of a request; never duplicates or terms already in the request.
+function expandTerms(terms) {
+  const present = new Set(terms);
+  const added = [];
+  for (const t of terms) {
+    for (const [key, en] of EXPAND) {
+      const hit = key.endsWith('*') ? t.startsWith(key.slice(0, -1)) : t === key;
+      if (!hit) continue;
+      for (const e of en) {
+        if (present.has(e)) continue;
+        present.add(e);
+        added.push(e);
+      }
+    }
+  }
+  return added.slice(0, EXPAND_CAP);
+}
+
 function quoted(term) { return `"${term.replaceAll('"', '')}"`; }
+
+// Agents are named with a one-line description, so they cost little: two extra slots are reserved for the best
+// agent hits, ranked among agents only. Otherwise a skill or command that scores far higher on the same words
+// pushes every agent out of the shared top-3 by the relative cut.
+const AGENT_SLOTS = 2;
 
 function search(db, query) {
   const { threshold, relative, limit, minTerms } = LIMITS;
   const terms = queryTerms(query);
   if (terms.length < minTerms) return [];
-  const rows = db.prepare(
+  // Expansion only widens the FTS query; coverage (`matched`/`terms` below) stays on the request's own terms.
+  const match = terms.concat(expandTerms(terms)).map(quoted).join(' OR ');
+  const run = (only, n) => db.prepare(
     `SELECT f.capability_id AS id, c.name AS name, c.kind AS kind, bm25(capability_fts,${WEIGHTS}) AS score
      FROM capability_fts f JOIN capabilities c ON c.id = f.capability_id
-     WHERE capability_fts MATCH ? AND c.status = 'enabled'
-     ORDER BY score, c.name LIMIT ?`).all(terms.map(quoted).join(' OR '), limit * 3);
-  const best = rows.length ? rows[0].score : 0;
-  const hits = rows.filter(r => r.score <= threshold && r.score <= best * relative).slice(0, limit);
+     WHERE capability_fts MATCH ? AND c.status = 'enabled'${only ? " AND c.name LIKE 'agent--%'" : ''}
+     ORDER BY score, c.name LIMIT ?`).all(match, n);
+  const keep = rows => rows.filter(r => r.score <= threshold && r.score <= rows[0].score * relative);
+  const hits = keep(run(false, limit * 3)).slice(0, limit);
+  const named = new Set(hits.map(h => h.id));
+  const have = hits.filter(h => h.name.startsWith('agent--')).length;
+  for (const r of keep(run(true, AGENT_SLOTS * 3)).filter(r => !named.has(r.id)).slice(0, Math.max(0, AGENT_SLOTS - have))) hits.push(r);
   const probe = db.prepare('SELECT 1 FROM capability_fts WHERE capability_fts MATCH ? AND capability_id = ?');
   for (const hit of hits) {
     hit.matched = terms.filter(t => probe.get(quoted(t), hit.id)).length;
@@ -342,6 +397,20 @@ function start(event, agent, env = process.env) {
   } catch { return null; } finally { try { db?.close(); } catch { /* ignore */ } }
 }
 
+// `install` leaves a marker file; the first session or prompt afterwards tells the user, once, what to do next.
+// The text goes out as `systemMessage`, so it reaches the user and never the model's context.
+function installNotice(agent, env = process.env) {
+  if ((env.FSR_MODE || 'inject') === 'off') return null;
+  const marker = path.join(env.FSR_HOME || path.join(os.homedir(), '.fsr'), `installed-${agent}`);
+  try {
+    if (!fs.existsSync(marker)) return null;
+    fs.unlinkSync(marker);
+    return 'FastSkillRetrieval is now installed in this agent.\n'
+      + 'Run /fsr-init-index once to index your skills, agents and commands: it enables the automatic, '
+      + 'per-request injection of the right agents and skills. Re-run it after installing new plugins.';
+  } catch { return null; }
+}
+
 function main() {
   let event;
   try { event = JSON.parse(fs.readFileSync(0, 'utf8').replace(/^﻿/, '')); } catch { return; }
@@ -349,7 +418,9 @@ function main() {
   let out = null;
   if (event.hook_event_name === 'SessionStart') out = start(event, agent);
   else if (!event.hook_event_name || event.hook_event_name === 'UserPromptSubmit') out = run(event, agent);
+  const note = installNotice(agent);
+  if (note) out = { ...out, systemMessage: out && out.systemMessage ? `${note}\n\n${out.systemMessage}` : note };
   if (out) process.stdout.write(JSON.stringify(out));
 }
 if (require.main === module) main();
-module.exports = { queryTerms, search, strong, run, start, STRONG };
+module.exports = { queryTerms, expandTerms, search, strong, run, start, STRONG };
