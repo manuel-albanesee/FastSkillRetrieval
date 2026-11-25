@@ -9,6 +9,7 @@
 //        FSR_INJECT_LIMIT total bytes of injected context (default 12000, min 1000)
 //        FSR_STRONG_COVERAGE share of request terms a hit must match for its text to be injected (default 0.3)
 //        FSR_STRONG_CAP max request terms counted for that share (default 12)
+//        FSR_UI = on (default) | off   user-facing banner (SessionStart) and per-prompt notices (systemMessage)
 //        FSR_GATE_WAIT ms (default 2000)   FSR_GATE_LEASE ms (default 60000)
 // Any problem results in no output: the hook never blocks the prompt.
 const fs = require('node:fs');
@@ -140,44 +141,51 @@ function writeInjected(file, set) {
 
 // One-line `description` from an agent's staged definition (never its body: Claude Code loads that only into the
 // subagent). Needed when the agent listing is compacted to names (fsr-agent-listing mod). '' when unavailable.
-function agentDescription(home, agent, hit) {
-  let raw;
-  try { raw = fs.readFileSync(path.join(home, 'sources', agent, hit.staged, 'SKILL.md'), 'utf8'); } catch { return ''; }
+function frontmatterField(raw, key) {
   const fm = /^﻿?---\r?\n([\s\S]*?)\r?\n---/.exec(raw);
   if (!fm) return '';
   const lines = fm[1].split(/\r?\n/);
-  const at = lines.findIndex(l => /^description:/.test(l));
+  const at = lines.findIndex(l => l.startsWith(`${key}:`));
   if (at < 0) return '';
-  let value = lines[at].replace(/^description:\s*/, '');
-  if (/^[|>][-+]?$/.test(value.trim())) {  // YAML block scalar: the indented lines that follow
+  let value = lines[at].slice(key.length + 1);
+  if (/^\s*[|>][-+]?\s*$/.test(value)) {  // YAML block scalar: the indented lines that follow
     const block = [];
     for (const l of lines.slice(at + 1)) { if (!/^\s+\S/.test(l)) break; block.push(l.trim()); }
     value = block.join(' ');
   }
-  value = value.trim().replace(/^(['"])([\s\S]*)\1$/, '$2').replace(/\s+/g, ' ');
-  return clip(value, 300).text;
+  return value.trim().replace(/^(['"])([\s\S]*)\1$/, '$2').replace(/\s+/g, ' ');
+}
+
+function agentDescription(home, agent, hit) {
+  let raw;
+  try { raw = fs.readFileSync(path.join(home, 'sources', agent, hit.staged, 'SKILL.md'), 'utf8'); } catch { return ''; }
+  return clip(frontmatterField(raw, 'description'), 300).text;
 }
 
 // Each agent is described once per session (key `agent:<name>` in the session file shared with bodies()):
 // the line stays in the conversation, so repeating it would only add tokens.
 function agentBlock(home, agent, hits, event, env) {
   const flag = String(env.FSR_AGENT_DESC ?? 'on').toLowerCase();
-  if (['off', '0', 'false', 'no'].includes(flag)) return '';
+  if (['off', '0', 'false', 'no'].includes(flag)) return { text: '', names: [] };
   const file = sessionFile(home, event.session_id);
   const seen = readInjected(file);
   const rows = hits.filter(h => h.kind === 'agent' && !seen.has(`agent:${h.name}`))
     .map(h => [h.name, agentDescription(home, agent, h)]).filter(([, d]) => d);
-  if (!rows.length) return '';
+  if (!rows.length) return { text: '', names: [] };
   for (const [n] of rows) seen.add(`agent:${n}`);
   writeInjected(file, seen);
-  return '\nAgents for this request (Agent tool, subagent_type = name):\n' + rows.map(([n, d]) => `- ${n}: ${d}`).join('\n');
+  return {
+    text: '\nAgents for this request (Agent tool, subagent_type = name):\n' + rows.map(([n, d]) => `- ${n}: ${d}`).join('\n'),
+    names: rows.map(([n]) => n),
+  };
 }
 
 // Full SKILL.md text (frontmatter removed, size-capped) for the top hits, once per session.
 function bodies(home, agent, hits, event, env) {
   const native = new Set();
   const flag = String(env.FSR_INJECT_BODY ?? 'on').toLowerCase();
-  if (['off', '0', 'false', 'no'].includes(flag)) return { out: [], native };
+  if (['off', '0', 'false', 'no'].includes(flag)) return { out: [], native, injected: [] };
+  const injected = [];
   const maxHits = Math.max(0, Number.parseInt(env.FSR_BODY_HITS ?? '2', 10) || 0);
   const limit = Math.max(500, Number.parseInt(env.FSR_BODY_LIMIT ?? '8000', 10) || 8000);
   const file = sessionFile(home, event.session_id);
@@ -199,9 +207,86 @@ function bodies(home, agent, hits, event, env) {
       + (runtime.length ? ` [declared but not enforced: ${runtime.join(', ')}; stay within them]` : '') + ` ---\n${text}`
       + (cut ? `\n[truncated at ${limit} bytes; read ${posix(path.join(skillDir, 'SKILL.md'))} for the rest]` : ''));
     seen.add(hit.name);
+    injected.push({ name: hit.name.replace(/^(?:agent|cmd)--/, ''), kind: hit.kind, tokens: tokens(text) });
   }
   if (out.length) writeInjected(file, seen);
-  return { out, native };
+  return { out, native, injected };
+}
+
+// ---- User-facing feedback -------------------------------------------------------------------------------------
+// `systemMessage` is shown to the user by Claude Code and never added to the model's context, so it costs no tokens.
+// Token counts are estimates (4 bytes per token), always printed with "~".
+const tokens = text => Math.ceil(Buffer.byteLength(String(text), 'utf8') / 4);
+const compactNum = n => (n >= 1000 ? `${(n / 1000).toFixed(n >= 10000 ? 0 : 1)}k` : String(n));
+const uiOn = env => !['off', '0', 'false', 'no'].includes(String(env.FSR_UI ?? 'on').toLowerCase());
+
+function boxed(title, lines) {
+  const width = Math.max(title.length + 4, ...lines.map(l => [...l].length)) + 2;
+  const top = `╭─ ${title} ${'─'.repeat(Math.max(1, width - title.length - 3))}╮`;
+  const row = l => `│ ${l}${' '.repeat(width - [...l].length - 1)}│`;
+  return [top, ...lines.map(row), `╰${'─'.repeat(width)}╯`].join('\n');
+}
+
+function lastJsonLine(file) {
+  try {
+    const rows = fs.readFileSync(file, 'utf8').trim().split('\n');
+    return JSON.parse(rows[rows.length - 1]);
+  } catch { return null; }
+}
+
+// What the hidden skills/commands would cost in Claude's resident list: "- name: description" per entry.
+function hiddenSkills(home) {
+  const store = path.join(home, 'hidden-skills');
+  let manifest;
+  try { manifest = JSON.parse(fs.readFileSync(path.join(store, 'manifest.json'), 'utf8')); } catch { return { count: 0, tokens: 0 }; }
+  let chars = 0;
+  const seen = new Set();
+  for (const [key, file] of Object.entries(manifest)) {
+    // The manifest also holds files of plugin versions that are no longer installed: count live ones, once per name.
+    if (!fs.existsSync(String(file))) continue;
+    let raw;
+    try { raw = fs.readFileSync(path.join(store, `${key}.orig`), 'utf8'); } catch { continue; }
+    const base = path.basename(String(file));
+    const name = frontmatterField(raw, 'name') || (/^skill\.md$/i.test(base) ? path.basename(path.dirname(String(file))) : base.replace(/\.md$/i, ''));
+    if (seen.has(name)) continue;
+    seen.add(name);
+    chars += name.length + Math.min(frontmatterField(raw, 'description').length, 250) + 4;
+  }
+  const count = seen.size;
+  return { count, tokens: Math.ceil(chars / 4) };
+}
+
+function sessionBanner(home, agent, dir, db, env) {
+  // Agents and commands are indexed as staged skills: sources.json maps each folder back to its real kind.
+  const kinds = { skill: 0, agent: 0, command: 0 };
+  try {
+    const map = JSON.parse(fs.readFileSync(path.join(dir, 'sources.json'), 'utf8'));
+    for (const e of Object.values(map)) if (e && e.kind in kinds) kinds[e.kind]++;
+    const total = db.prepare("SELECT COUNT(*) AS n FROM capabilities WHERE status = 'enabled'").get().n;
+    kinds.skill = Math.max(0, total - kinds.agent - kinds.command);
+  } catch { /* counts stay 0 */ }
+  const listing = agent === 'claude' ? lastJsonLine(path.join(home, 'mods', 'fsr-agent-listing', 'listing.jsonl')) : null;
+  const agents = listing && listing.chars_before > listing.chars_after ? Math.ceil((listing.chars_before - listing.chars_after) / 4) : 0;
+  const skills = hiddenSkills(home);
+  const total = agents + skills.tokens;
+  const lines = [
+    `index ${indexTag(dir).replace(/^ \[index |\]$/g, '') || 'n/a'} · ${kinds.skill ?? 0} skills · ${kinds.agent ?? 0} agents · ${kinds.command ?? 0} commands`,
+    total ? `saved ~${compactNum(total)} tokens on every turn:` : 'no resident context hidden yet (see hide-skills / agent listing mod)',
+  ];
+  if (agents) lines.push(`  ▸ agent listing   -${compactNum(agents)}  (${listing.compacted} agents left out)`);
+  if (skills.tokens) lines.push(`  ▸ skills/commands -${compactNum(skills.tokens)}  (${skills.count} hidden)`);
+  lines.push('relevant ones are injected on demand, marked "◆ FSR"');
+  return boxed('◆ FSR · FastSkillRetrieval active', lines);
+}
+
+function promptNotice(loaded, agentNames, hits) {
+  const lines = [];
+  for (const s of loaded) lines.push(`◆ FSR ▸ ${s.kind} injected: ${s.name} (~${compactNum(s.tokens)} tokens)`);
+  if (agentNames.length) lines.push(`◆ FSR ▸ agent${agentNames.length > 1 ? 's' : ''} found: ${agentNames.join(', ')}`);
+  const shown = new Set([...loaded.map(s => s.name), ...agentNames]);
+  const rest = hits.filter(h => !shown.has(h.name)).map(h => h.name);
+  if (lines.length && rest.length) lines.push(`◆ FSR ▸ also suggested: ${rest.join(', ')}`);
+  return lines.join('\n');
 }
 
 function run(event, agent, env = process.env) {
@@ -224,24 +309,47 @@ function run(event, agent, env = process.env) {
     }
     if (!hits.length) return null;
     const note = h => (native.has(h.name) ? ', invoke with the Skill tool' : '');
-    const { out: loaded, native } = bodies(home, agent, hits, event, env);
+    const { out: loaded, native, injected } = bodies(home, agent, hits, event, env);
     let context = `FastSkillRetrieval${indexTag(dir)}: installed tools possibly relevant to this request (use only if they fit): `
       + hits.map(h => `${h.name} (${h.kind}${note(h)})`).join(', ');
-    context += agentBlock(home, agent, hits, event, env);
+    const described = agentBlock(home, agent, hits, event, env);
+    context += described.text;
     if (loaded.length) {
       context += '\nTheir instructions follow; apply them directly instead of calling the Skill tool.\n\n' + loaded.join('\n\n');
     }
     const injectLimit = Math.max(1000, Number.parseInt(env.FSR_INJECT_LIMIT ?? '12000', 10) || 12000);
-    return { hookSpecificOutput: { hookEventName: 'UserPromptSubmit', additionalContext: capTotal(context, injectLimit) } };
+    const out = { hookSpecificOutput: { hookEventName: 'UserPromptSubmit', additionalContext: capTotal(context, injectLimit) } };
+    const notice = uiOn(env) ? promptNotice(injected, described.names, hits) : '';
+    if (notice) out.systemMessage = notice;
+    return out;
+  } catch { return null; } finally { try { db?.close(); } catch { /* ignore */ } }
+}
+
+// SessionStart: a banner for the user only (systemMessage), nothing is added to the model's context.
+function start(event, agent, env = process.env) {
+  if (!uiOn(env) || (env.FSR_MODE || 'inject') === 'off' || event.source === 'compact') return null;
+  const home = env.FSR_HOME || path.join(os.homedir(), '.fsr');
+  const dir = path.join(home, 'index', agent);
+  const file = path.join(dir, 'registry.sqlite3');
+  let db;
+  try {
+    if (!fs.existsSync(file)) return null;
+    const { DatabaseSync } = require('node:sqlite');
+    db = new DatabaseSync(file, { readOnly: true });
+    // Claude Code prefixes "SessionStart:<source> says: " on the same line and trims leading whitespace, which
+    // would shift the box's first row. A plain first line takes the prefix; the box then starts at column 0.
+    return { systemMessage: 'FastSkillRetrieval ready:\n' + sessionBanner(home, agent, dir, db, env) };
   } catch { return null; } finally { try { db?.close(); } catch { /* ignore */ } }
 }
 
 function main() {
   let event;
   try { event = JSON.parse(fs.readFileSync(0, 'utf8').replace(/^﻿/, '')); } catch { return; }
-  if (event.hook_event_name && event.hook_event_name !== 'UserPromptSubmit') return;
-  const out = run(event, process.argv[2] || 'claude');
+  const agent = process.argv[2] || 'claude';
+  let out = null;
+  if (event.hook_event_name === 'SessionStart') out = start(event, agent);
+  else if (!event.hook_event_name || event.hook_event_name === 'UserPromptSubmit') out = run(event, agent);
   if (out) process.stdout.write(JSON.stringify(out));
 }
 if (require.main === module) main();
-module.exports = { queryTerms, search, strong, run, STRONG };
+module.exports = { queryTerms, search, strong, run, start, STRONG };

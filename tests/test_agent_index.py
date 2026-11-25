@@ -133,12 +133,14 @@ def test_install_is_idempotent_and_uninstall_keeps_foreign_entries(tmp_path):
     entries = config["hooks"]["UserPromptSubmit"]
     assert config["model"] == "x" and foreign in entries
     assert sum(MARKER in json.dumps(e) for e in entries) == 1
+    assert sum(MARKER in json.dumps(e) for e in config["hooks"]["SessionStart"]) == 1  # user-facing banner
     assert (home / ".claude" / "commands" / "fsr-init-index.md").is_file()
     assert (tmp_path / "fsr" / "hooks" / MARKER).is_file()
 
     uninstall("claude", home=home, env=env)
     after = json.loads(settings.read_text("utf-8"))
     assert after["hooks"]["UserPromptSubmit"] == [foreign]
+    assert "SessionStart" not in after["hooks"]
     assert not (home / ".claude" / "commands" / "fsr-init-index.md").exists()
 
 

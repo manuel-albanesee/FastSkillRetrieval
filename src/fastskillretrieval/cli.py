@@ -164,14 +164,19 @@ def agent_main(argv) -> int:
                 args.plugins, args.settings, keep=args.keep, dry_run=args.dry_run
             )
     else:
+        from . import console_ui
         from .agent_index import init_index
 
+        console_ui.banner(args.agent)
         result = init_index(
             args.agent,
             project=args.project,
-            log=lambda m: print(m, file=sys.stderr),
+            log=lambda m: print(f"  {m}", file=sys.stderr, flush=True),
             if_stale=args.if_stale,
+            on_stage=console_ui.on_stage,
+            on_item=console_ui.on_item,
         )
+        console_ui.done(result)
     sys.stdout.write(serialized(result) + "\n")
     return 0
 

@@ -267,3 +267,32 @@ def test_golden_output_is_stable_across_sessions(tmp_path: Path) -> None:
         GOLDEN.write_text(json.dumps(first, indent=2, ensure_ascii=False) + "\n", encoding="utf-8", newline="\n")
     expected = json.loads(GOLDEN.read_text(encoding="utf-8"))
     assert first == expected
+
+
+def test_notice_for_user_names_injected_skill_and_costs_no_context(tmp_path: Path) -> None:
+    _registry(tmp_path, {"k8s-review": "skill"})
+    _skill(tmp_path, "k8s-review", "Check probes and limits.")
+    out = _run(tmp_path)
+    assert out is not None
+    assert "◆ FSR" in out["systemMessage"] and "skill injected: k8s-review" in out["systemMessage"]
+    assert "◆ FSR" not in _context(out)  # the notice is for the user, never for the model
+
+
+def test_notice_can_be_turned_off(tmp_path: Path) -> None:
+    _registry(tmp_path, {"k8s-review": "skill"})
+    _skill(tmp_path, "k8s-review", "Check probes and limits.")
+    assert "systemMessage" not in _run(tmp_path, FSR_UI="off")
+
+
+def test_session_banner_reports_counts_and_saved_tokens(tmp_path: Path) -> None:
+    _registry(tmp_path, {"k8s-review": "skill", "agent--planner": "agent"})
+    mod = tmp_path / "mods" / "fsr-agent-listing"
+    mod.mkdir(parents=True)
+    (mod / "listing.jsonl").write_text(
+        json.dumps({"chars_before": 24000, "chars_after": 2000, "compacted": 80, "kept": 5}) + "\n", encoding="utf-8")
+    out = _run(tmp_path, {"hook_event_name": "SessionStart", "source": "startup"})
+    assert out is not None and "additionalContext" not in json.dumps(out)
+    banner = out["systemMessage"]
+    assert "FSR" in banner and "saved ~5.5k tokens" in banner and "1 agents" in banner
+    assert _run(tmp_path, {"hook_event_name": "SessionStart", "source": "compact"}) is None
+    assert _run(tmp_path, {"hook_event_name": "SessionStart"}, FSR_UI="off") is None

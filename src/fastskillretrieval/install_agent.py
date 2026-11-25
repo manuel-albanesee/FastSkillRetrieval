@@ -49,11 +49,12 @@ Run this command, wait for it to finish and report its JSON summary
 (counts found, published, skipped):
 
 ```
-"{python}" -m fastskillretrieval init-index --agent {agent} --project "$PWD"
+"{python}" -m fastskillretrieval init-index --agent {agent} --project "$PWD" --if-stale
 ```
 
-The index is rebuilt from scratch each time and is used by the prompt hook to suggest relevant tools
-before a request reaches you. If the command fails, show the error and stop.
+The index is rebuilt from scratch only when the installed skills/agents/commands changed since the last
+build (status "current" means the existing index was reused). It is used by the prompt hook to suggest
+relevant tools before a request reaches you. To force a rebuild, run the command without `--if-stale`. If the command fails, show the error and stop.
 """
 
 
@@ -78,13 +79,13 @@ def _load(path: Path) -> dict:
     return value
 
 
-def _entries(config: dict) -> list:
+def _entries(config: dict, event: str = "UserPromptSubmit") -> list:
     hooks = config.setdefault("hooks", {})
     if not isinstance(hooks, dict):
         raise ValueError("'hooks' must be an object")
-    entries = hooks.setdefault("UserPromptSubmit", [])
+    entries = hooks.setdefault(event, [])
     if not isinstance(entries, list):
-        raise ValueError("'hooks.UserPromptSubmit' must be a list")
+        raise ValueError(f"'hooks.{event}' must be a list")
     return entries
 
 
@@ -117,6 +118,14 @@ def install(agent: str, home: Path | None = None, env=None, python: str | None =
         {"hooks": [{"type": "command", "command": f'node "{hook}" {agent}', "timeout": 5}]}
     )
     config["hooks"]["UserPromptSubmit"] = entries
+    # The session banner (user-facing, costs the model no tokens) is registered for Claude Code only.
+    starts = [entry for entry in _entries(config, "SessionStart") if not _ours(entry)]
+    if agent == "claude":
+        starts.append({"hooks": [{"type": "command", "command": f'node "{hook}" {agent}', "timeout": 5}]})
+    if starts:
+        config["hooks"]["SessionStart"] = starts
+    else:
+        config["hooks"].pop("SessionStart", None)
     mod = None
     if agent == "claude":
         mod_dir = fsr_home(env) / "mods" / LISTING_MOD
@@ -149,15 +158,17 @@ def uninstall(agent: str, home: Path | None = None, env=None) -> dict:
     removed = False
     if config_file.exists():
         config = _load(config_file)
-        entries = _entries(config)
-        kept = [entry for entry in entries if not _ours(entry)]
-        removed = len(kept) != len(entries)
-        if kept:
-            config["hooks"]["UserPromptSubmit"] = kept
-        else:
-            config["hooks"].pop("UserPromptSubmit", None)
-            if not config["hooks"]:
-                config.pop("hooks")
+        removed = False
+        for event in ("UserPromptSubmit", "SessionStart"):
+            entries = _entries(config, event)
+            kept = [entry for entry in entries if not _ours(entry)]
+            removed = removed or len(kept) != len(entries)
+            if kept:
+                config["hooks"][event] = kept
+            else:
+                config["hooks"].pop(event, None)
+        if not config["hooks"]:
+            config.pop("hooks")
         if agent == "claude":
             _plugin_dirs(config, None)
         _save(config_file, config)
