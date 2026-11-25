@@ -8,6 +8,8 @@ in milliseconds. No LLM calls, no network, no API keys.
 ![SQLite FTS5](https://img.shields.io/badge/search-SQLite%20FTS5%20%2F%20BM25-green)
 ![MCP stdio](https://img.shields.io/badge/interface-CLI%20%2B%20MCP%20stdio-lightgrey)
 
+Technical documentation lives in the [wiki](https://github.com/manuel-albanesee/FastSkillRetrieval/wiki).
+
 ## Why
 
 Agent setups accumulate hundreds of skills. Loading all their descriptions into every
