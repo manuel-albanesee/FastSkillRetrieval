@@ -42,7 +42,7 @@ the catalog outside the prompt and returns a bounded shortlist on demand.
 
 ## Quick start
 
-Requires Python 3.13 and [uv](https://docs.astral.sh/uv/).
+Requires Python 3.13 and [uv](https://docs.astral.sh/uv/). The agent hook also needs Node.js 22.5 or newer.
 
 ```bash
 uv sync --frozen --extra dev
@@ -63,24 +63,57 @@ The step-by-step walkthrough (inspect, submit, publish, search, load) is in the
 
 FastSkillRetrieval can index every skill, subagent and slash command you have installed and
 suggest the relevant ones **before** your request reaches the model, through a read-only
-`UserPromptSubmit` hook.
+`UserPromptSubmit` hook. The hook needs Node.js 22.5 or newer (it reads the index with `node:sqlite`).
 
 ```bash
 fastskillretrieval install --agent claude      # or: --agent codex
-fastskillretrieval init-index --agent claude   # or run /fsr-init-index inside the agent
 ```
 
-- `install` merges a hook entry into `~/.claude/settings.json` (Codex: `~/.codex/hooks.json`)
-  and adds the `/fsr-init-index` command. It is idempotent, keeps a one-time `.fsr-backup` and
-  never touches entries it did not create. `uninstall` removes only its own. Codex requires you
-  to trust the new hook once from its `/hooks` screen.
-- `init-index` discovers user, project and plugin skills, agents and commands (disabled plugins
-  are skipped), stages copies under `~/.fsr/sources/<agent>/` and publishes the registry to
-  `~/.fsr/index/<agent>/`. No model is called. Add `--if-stale` to rebuild only when the installed
-  set changed. A full rebuild of about 570 items takes roughly three minutes.
-- The hook opens the registry read-only (about 1 to 4 ms) and adds the best matches as context.
-  `FSR_MODE=inject` (default), `suggest` (log only to `~/.fsr/suggestions.jsonl`) or `off`.
-  `FSR_HOME` moves the whole `~/.fsr` folder.
+`install` registers the hook, adds the `/fsr-init-index` command and then builds the index
+(`init-index --if-stale`), so the first prompt after installing is already covered.
+
+| Command | What it does |
+|---|---|
+| `install [--agent] [--no-index] [--no-agent-listing]` | Merges the hook into `~/.claude/settings.json` (Codex: `~/.codex/hooks.json`). Idempotent, keeps a one-time `.fsr-backup`, never touches entries it did not create. An indexing failure is reported without failing the install. |
+| `uninstall [--agent]` | Removes only what `install` added. |
+| `init-index [--agent] [--project DIR] [--if-stale]` | Discovers user, project and plugin skills, agents and commands (disabled plugins are skipped), stages copies under `~/.fsr/sources/<agent>/` and publishes the registry to `~/.fsr/index/<agent>/`. `--if-stale` skips the rebuild when the installed set is unchanged. A full rebuild of about 570 items takes roughly three minutes, with a console progress display. |
+| `hide-skills [--restore]` | Marks plugin skills `disable-model-invocation: true`, so the resident skill list shrinks and FSR is the way they reach the model. Original bytes are saved and `--restore` is exact. Run it again after a plugin update. |
+| `hide-agents --plugin NAME [--keep plugin:agent] [--dry-run] [--restore]` | Writes `Agent(plugin:agent)` deny rules into the settings file, with a byte-exact backup. |
+
+Codex requires you to trust the new hook once from its `/hooks` screen.
+
+### What the hook injects
+
+- It opens the registry read-only (about 1 to 4 ms) and **names** the best matches (at most
+  three). Bare numeric tokens in the query are ignored, because they matched version strings
+  in unrelated skills.
+- Ranking favors the definition's own name: indexed descriptions are prefixed with the name
+  words, so `typescript-reviewer` outranks a skill that merely mentions TypeScript.
+- A hit is **strong** only when it matches enough of the request terms (`FSR_STRONG_COVERAGE`,
+  default 0.3, counted against at most `FSR_STRONG_CAP` = 12 terms). Only strong skill and
+  command hits get their full `SKILL.md` injected; weaker hits are just named, so a false
+  positive costs a few tokens rather than a whole manual.
+- Agent descriptions are injected once per session, because the `fsr-agent-listing` mod
+  (installed by default, `--no-agent-listing` to skip) shrinks Claude Code's agent listing to
+  the built-in agents. Measured with `claude -p` on Haiku, input per session dropped from 46.2k
+  to 37.4k tokens. Agents left out of the listing stay dispatchable by name.
+- Output is deterministic, and the hook never blocks a prompt: any problem yields no output.
+
+### Environment variables
+
+| Variable | Default | Meaning |
+|---|---|---|
+| `FSR_HOME` | `~/.fsr` | Moves the whole state folder. |
+| `FSR_MODE` | `inject` | `inject`, `suggest` (log only to `~/.fsr/suggestions.jsonl`) or `off`. |
+| `FSR_INJECT_BODY` | `on` | `off` stops injecting `SKILL.md` text. |
+| `FSR_BODY_HITS` / `FSR_BODY_LIMIT` | 2 / 8000 | Max bodies injected, and bytes per body. |
+| `FSR_INJECT_LIMIT` | 12000 | Total bytes of injected context (minimum 1000). |
+| `FSR_STRONG_COVERAGE` / `FSR_STRONG_CAP` | 0.3 / 12 | Strong-match threshold. |
+| `FSR_AGENT_DESC` | on | `off` stops injecting agent descriptions. |
+| `FSR_UI` | `on` | `off` hides the session banner and per-prompt notices. |
+
+`scripts/hook_eval.cjs` replays labelled prompts (`scripts/hook_eval_cases.json`) against your
+index to tune the strong-match thresholds.
 
 Used by [Caronte](https://github.com/manuel-albanesee/Caronte), which installs it automatically.
 
@@ -124,18 +157,19 @@ uv run python -m pytest -q
 uv run ruff check src tests
 ```
 
-Current status: 335 passed, 1 skipped (the skipped test is platform-specific).
+Current status: 368 passed, 1 skipped (the skipped test is platform-specific).
 
 ## Project layout
 
 | Path | Contents |
 |---|---|
-| `src/fastskillretrieval/` | registry, catalog, ingestion, planner, CLI, MCP server |
+| `src/fastskillretrieval/` | registry, catalog, ingestion, planner, CLI, MCP server, agent install and hide tools |
+| `src/fastskillretrieval/assets/` | prompt hook (`fsr-hook.cjs`) and the `fsr-agent-listing` mod |
 | `tests/` | acceptance and regression tests |
 | `schemas/` | JSON schemas for contracts |
 | `examples/` | sample skills, candidate metadata, MCP config template |
 | `scripts/` | benchmarks and verification scripts |
-| `doc/` | design notes, evaluations and the Italian guide |
+| `doc/` | design notes, evaluations and the [Italian guide](doc/Guida_IT.md) |
 | `plans/` | implementation plans |
 
 ## Scope and limits
