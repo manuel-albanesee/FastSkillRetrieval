@@ -20,6 +20,7 @@ import time
 from dataclasses import dataclass
 from pathlib import Path
 
+from .agent_quality import MAX_LENGTH, QUALITY_VERSION, alias_lines, correct, search_terms
 from .capabilities import parse_definition
 from .registry import Registry
 
@@ -216,11 +217,16 @@ def _candidate(root: Path, item: dict) -> dict:
     if len(description) < 40:
         raise ValueError("source_description_too_short")
     label = focus(item["name"])
+    aliases = [item["name"]]
+    if item["name"].startswith(PREFIX["agent"]):
+        room = MAX_LENGTH - len(label) - 2 if label else MAX_LENGTH
+        aliases += alias_lines(search_terms(item["name"], description))
+        description = correct(item["name"], description, room, keywords=False)
     if label:
         description = f"{label}: {description}"
     return {
         "description": description[:1000],
-        "aliases": [item["name"]],
+        "aliases": aliases,
         "capabilities": [
             {
                 "action": "read",
@@ -300,6 +306,7 @@ def build_registry(
 def signature(sources: list[Source]) -> str:
     """Cheap fingerprint of what is installed: kind, name and definition file stat."""
     digest = hashlib.sha256()
+    digest.update(f"agent-quality:{QUALITY_VERSION}\n".encode())
     for source in sorted(sources, key=lambda s: (s.kind, s.display, str(s.path))):
         file = source.path / "SKILL.md" if source.kind == "skill" else source.path
         try:

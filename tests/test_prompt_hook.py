@@ -144,6 +144,34 @@ def _custom_registry(home: Path, rows: dict[str, str]) -> None:
     db.close()
 
 
+def _agent_reserve_registry(home: Path, agent_text: str) -> None:
+    _custom_registry(home, {"zz-skill": "kubernetes ingress manifest staging cluster review " * 4})
+    db = sqlite3.connect(home / "index" / "claude" / "registry.sqlite3")
+    db.execute("INSERT INTO capabilities VALUES(?,?,?,?)", ("agent--k8s-helper", "agent--k8s-helper", "agent", "enabled"))
+    db.execute("INSERT INTO capability_fts VALUES(?,?,?,?,?,?)", ("agent--k8s-helper", agent_text, "", "", "", ""))
+    db.commit()
+    db.close()
+    sources = home / "index" / "claude" / "sources.json"
+    data = json.loads(sources.read_text(encoding="utf-8"))
+    data["agent--k8s-helper"] = {"kind": "agent", "name": "k8s-helper", "origin": "user"}
+    data["zz-skill"] = {"kind": "skill", "name": "zz-skill", "origin": "user"}
+    sources.write_text(json.dumps(data), encoding="utf-8")
+    _skill(home, "zz-skill", "Skill body.")
+    _skill(home, "agent--k8s-helper", "Agent prompt.")
+
+
+def test_agent_slot_survives_relative_cut_of_dominant_skill(tmp_path: Path) -> None:
+    _agent_reserve_registry(tmp_path, "kubernetes ingress manifest")
+    ctx = _context(_run(tmp_path, {"prompt": "kubernetes ingress manifest staging cluster review", "session_id": "s"}))
+    assert "zz-skill (skill)" in ctx and "k8s-helper (agent)" in ctx
+
+
+def test_agent_below_threshold_is_not_named(tmp_path: Path) -> None:
+    _agent_reserve_registry(tmp_path, "unrelated topic about gardens and lunch")
+    out = _run(tmp_path, {"prompt": "kubernetes ingress manifest staging cluster review", "session_id": "s"})
+    assert "k8s-helper" not in _context(out)
+
+
 def test_bare_numbers_never_match(tmp_path: Path) -> None:
     _custom_registry(tmp_path, {"rails-patterns": "rails 7 8 framework patterns"})
     _skill(tmp_path, "rails-patterns", "Rails body.")
@@ -296,3 +324,51 @@ def test_session_banner_reports_counts_and_saved_tokens(tmp_path: Path) -> None:
     assert "FSR" in banner and "saved ~5.5k tokens" in banner and "1 agents" in banner
     assert _run(tmp_path, {"hook_event_name": "SessionStart", "source": "compact"}) is None
     assert _run(tmp_path, {"hook_event_name": "SessionStart"}, FSR_UI="off") is None
+
+
+def _english_agent_registry(home: Path) -> None:
+    _custom_registry(home, {})
+    db = sqlite3.connect(home / "index" / "claude" / "registry.sqlite3")
+    db.execute("INSERT INTO capabilities VALUES(?,?,?,?)", ("agent--code-simplifier", "agent--code-simplifier", "agent", "enabled"))
+    text = "simplify complicated code without changing behavior"
+    db.execute("INSERT INTO capability_fts VALUES(?,?,?,?,?,?)", ("agent--code-simplifier", text, text, "", "", ""))
+    db.commit()
+    db.close()
+    sources = home / "index" / "claude" / "sources.json"
+    sources.write_text(json.dumps({"agent--code-simplifier": {"kind": "agent", "name": "code-simplifier", "origin": "user"}}),
+                       encoding="utf-8")
+    _skill(home, "agent--code-simplifier", "Agent prompt.")
+
+
+def test_italian_request_finds_english_only_agent(tmp_path: Path) -> None:
+    _english_agent_registry(tmp_path)
+    out = _run(tmp_path, {"prompt": "semplifica questo codice troppo complicato", "session_id": "s"})
+    assert "code-simplifier (agent)" in _context(out)
+
+
+def test_request_without_glossary_terms_is_unchanged(tmp_path: Path) -> None:
+    _english_agent_registry(tmp_path)
+    assert _run(tmp_path, {"prompt": "kubernetes ingress manifest staging cluster", "session_id": "s"}) is None
+
+
+def test_expand_terms_has_no_duplicates_or_present_terms() -> None:
+    script = (f"const h = require({json.dumps(str(HOOK))});"
+              "console.log(JSON.stringify(h.expandTerms(['semplifica', 'simplify', 'progetta', 'architettura'])));")
+    added = json.loads(subprocess.run(["node", "-e", script], text=True, capture_output=True, check=True).stdout)
+    assert added and len(added) == len(set(added)) and "simplify" not in added
+    assert "design" in added and "architecture" in added
+
+
+def test_install_notice_is_shown_once_to_the_user_only(tmp_path: Path) -> None:
+    (tmp_path / "installed-claude").write_text("run /fsr-init-index\n", encoding="utf-8")
+    first = _run(tmp_path, {"prompt": "hello there", "session_id": "s"})
+    assert first is not None and "/fsr-init-index" in first["systemMessage"]
+    assert "hookSpecificOutput" not in first
+    assert not (tmp_path / "installed-claude").exists()
+    assert _run(tmp_path, {"prompt": "hello there", "session_id": "s"}) is None
+
+
+def test_install_notice_respects_mode_off(tmp_path: Path) -> None:
+    (tmp_path / "installed-claude").write_text("x", encoding="utf-8")
+    assert _run(tmp_path, {"prompt": "hello there", "session_id": "s"}, FSR_MODE="off") is None
+    assert (tmp_path / "installed-claude").exists()
