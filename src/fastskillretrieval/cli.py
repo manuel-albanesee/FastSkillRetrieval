@@ -114,6 +114,13 @@ def agent_parser() -> argparse.ArgumentParser:
                 action="store_false",
                 help="Keep Claude Code's full agent listing (skip the fsr-agent-listing mod)",
             )
+        if name == "install":
+            command.add_argument(
+                "--no-index",
+                dest="index",
+                action="store_false",
+                help="Skip building the search index after installing",
+            )
         if name == "init-index":
             command.add_argument(
                 "--project", type=Path, help="Also index this project's .claude/.codex"
@@ -144,6 +151,25 @@ def agent_main(argv) -> int:
         from .install_agent import install
 
         result = install(args.agent, agent_listing=args.agent_listing)
+        if args.index:
+            from . import console_ui
+            from .agent_index import init_index
+
+            console_ui.banner(args.agent)
+            try:
+                result["index"] = init_index(
+                    args.agent,
+                    project=Path.cwd(),
+                    log=lambda m: print(f"  {m}", file=sys.stderr, flush=True),
+                    if_stale=True,
+                    on_stage=console_ui.on_stage,
+                    on_item=console_ui.on_item,
+                )
+                console_ui.done(result["index"])
+                result.pop("next", None)
+            except Exception as error:  # the install itself succeeded; the index can be rebuilt later
+                print(f"  Indexing failed: {error}", file=sys.stderr, flush=True)
+                result["index"] = {"status": "error", "error": str(error)}
     elif args.command == "uninstall":
         from .install_agent import uninstall
 
@@ -164,14 +190,19 @@ def agent_main(argv) -> int:
                 args.plugins, args.settings, keep=args.keep, dry_run=args.dry_run
             )
     else:
+        from . import console_ui
         from .agent_index import init_index
 
+        console_ui.banner(args.agent)
         result = init_index(
             args.agent,
             project=args.project,
-            log=lambda m: print(m, file=sys.stderr),
+            log=lambda m: print(f"  {m}", file=sys.stderr, flush=True),
             if_stale=args.if_stale,
+            on_stage=console_ui.on_stage,
+            on_item=console_ui.on_item,
         )
+        console_ui.done(result)
     sys.stdout.write(serialized(result) + "\n")
     return 0
 

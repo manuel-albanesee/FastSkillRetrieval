@@ -157,13 +157,17 @@ def collect(agent: str, home: Path, project: Path | None = None) -> list[Source]
     raise ValueError(f"unsupported agent: {agent}")
 
 
-def stage(sources: list[Source], root: Path) -> dict[str, dict]:
-    """Copy every source into <root>/<folder>/ and return folder -> descriptor."""
+def stage(sources: list[Source], root: Path, progress=None) -> dict[str, dict]:
+    """Copy every source into <root>/<folder>/ and return folder -> descriptor.
+
+    ``progress(position, total, source)`` is called before each copy, to show what is being read."""
     if root.exists():
         shutil.rmtree(root)
     root.mkdir(parents=True)
     staged: dict[str, dict] = {}
-    for source in sources:
+    for position, source in enumerate(sources, 1):
+        if progress:
+            progress(position, len(sources), source)
         base = PREFIX[source.kind] + _UNSAFE.sub("-", source.name).strip("-")
         folder, count = base, 1
         if folder in staged:
@@ -243,8 +247,12 @@ def _inventory(store: Registry) -> list[dict]:
             return items
 
 
-def build_registry(state: Path, root: Path, log=lambda message: None) -> list[dict]:
-    """Discover, submit and publish every staged folder. Returns the skipped items."""
+def build_registry(
+    state: Path, root: Path, log=lambda message: None, progress=None
+) -> list[dict]:
+    """Discover, submit and publish every staged folder. Returns the skipped items.
+
+    ``progress(position, total, item, outcome)`` is called per definition; outcome is ok or skipped."""
     skipped: list[dict] = []
     store = Registry(state, root)
     try:
@@ -255,11 +263,13 @@ def build_registry(state: Path, root: Path, log=lambda message: None) -> list[di
             if found["status"] != "ok":
                 raise RuntimeError(f"discover_failed:{found.get('reason')}")
             todo = [i for i in _inventory(store) if i["state"] in ("discovered", "needs_revision")]
-            for item in todo:
+            for position, item in enumerate(todo, 1):
                 try:
                     candidate = _candidate(root, item)
                 except Exception as error:  # noqa: BLE001 - one bad definition must not stop the index
                     skipped.append({"name": item["name"], "reason": str(error)[:80]})
+                    if progress:
+                        progress(position, len(todo), item, "skipped")
                     continue
                 result = store.call(
                     "submit",
@@ -270,6 +280,8 @@ def build_registry(state: Path, root: Path, log=lambda message: None) -> list[di
                 )
                 if result["status"] != "ok":
                     skipped.append({"name": item["name"], "reason": str(result.get("reason"))})
+                if progress:
+                    progress(position, len(todo), item, "ok" if result["status"] == "ok" else "skipped")
             while True:
                 published = store.call("publish", "fsr-publish", batch_size=100, deadline_ms=30000)
                 if published["status"] == "ok":
@@ -306,6 +318,8 @@ def init_index(
     env=None,
     log=lambda message: None,
     if_stale: bool = False,
+    on_stage=None,
+    on_item=None,
 ) -> dict:
     """Rebuild the index for ``agent`` from scratch and return a summary.
 
@@ -323,11 +337,14 @@ def init_index(
             previous = {}
         if previous.get("signature") == fingerprint:
             return {**previous, "status": "current", "rebuilt": False}
-    staged = stage(sources, root)
+    log(f"Found {len(sources)} items: " + ", ".join(
+        f"{sum(1 for s in sources if s.kind == kind)} {kind}s" for kind in PREFIX
+    ))
+    staged = stage(sources, root, on_stage)
     if state.exists():
         shutil.rmtree(state)
     state.parent.mkdir(parents=True, exist_ok=True)
-    skipped = build_registry(state, root, log)
+    skipped = build_registry(state, root, log, on_item)
     db = sqlite3.connect(state / "registry.sqlite3")
     try:
         published = db.execute("SELECT COUNT(*) FROM capability_fts").fetchone()[0]
