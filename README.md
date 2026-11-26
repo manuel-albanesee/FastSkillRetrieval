@@ -28,6 +28,81 @@ the catalog outside the prompt and returns a bounded shortlist on demand.
 
 ## How it works
 
+Without FSR every session pays for the whole catalog; with FSR the catalog stays outside
+the prompt and only the few matching entries are injected per request.
+
+```mermaid
+flowchart LR
+    subgraph Before["Without FSR"]
+        direction TB
+        A1["Prompt"] --> A2["Agent + ALL skill and<br/>agent descriptions<br/>(hundreds, every session)"]
+        A2 --> A3["Model"]
+    end
+    subgraph After["With FSR"]
+        direction TB
+        B1["Prompt"] --> B2{{"FSR hook<br/>BM25 lookup, 1-4 ms"}}
+        B2 -->|"top 3 names<br/>strong hits: full SKILL.md"| B3["Agent + only the<br/>relevant entries"]
+        B3 --> B4["Model"]
+        B5[("Local SQLite index<br/>outside the prompt")] -.-> B2
+    end
+    Before ~~~ After
+```
+
+![Input tokens per session: 46.2k without FSR, 37.4k with FSR, 19% fewer](doc/img/token-savings.svg)
+
+### What is measured, what is estimated
+
+| Claim | Status | Value |
+|---|---|---|
+| Input tokens per session saved by hiding the callable agents | **Measured** (`claude -p`, Haiku, single run) | 46.2k to 37.4k, so 8.8k fewer (about 19%) |
+| Hook lookup time | **Measured** (registry opened read-only) | about 1 to 4 ms |
+| Skills hidden from the resident list | **Not measured** | no token figure is claimed |
+| Net saving per request (after the names and `SKILL.md` the hook injects) | **Not measured** | no figure is claimed |
+| Size of a full catalog, if everything were loaded | **Estimate** (bytes / 4, not a tokenizer count) | see below |
+
+The measured saving comes from the agent listing only. At session start Claude Code hands the
+model the list of every callable agent, and in the measured setup that list accounted for
+about **8.8k input tokens (roughly 19% of the session)**. FSR shrinks it to the built-in
+agents and injects the right descriptions on demand (see
+[What the hook injects](#what-the-hook-injects)). The 8.8k is the net difference between the
+two runs, so it already includes what the hook injected in the FSR run. It is one run, not a
+guaranteed ratio, and the gross size of the list was not measured separately.
+
+### What you gain beyond the token count
+
+Claude Code keeps the skill list resident in every session, and that list is bounded by a
+character budget. The
+[official skills page](https://code.claude.com/docs/en/skills) says the combined
+`description` and `when_to_use` text is truncated at 1,536 characters per skill and that every
+skill in the listing adds to context on every turn. Past the budget, whole descriptions are
+dropped. An independent test
+([dev.to, Claude Code 2.1.289, 2026-10-05](https://dev.to/rulestack/with-160-skills-installed-claude-code-kept-20-descriptions-and-the-model-found-0-of-3-skills-that-10j2))
+installed 160 skills with 1,000-character descriptions and found only 20 kept their
+description under a 30,000-character budget. Skills left with the name only were invoked in
+0 of 3 runs, while skills that kept their description were invoked 7 of 7 times. The exact
+count depends on description length, context window and settings, so the number of skills
+that fit is not a fixed 50. These are third-party figures, not measurements made in this
+repo. FSR removes that ceiling, because the catalog lives in a local index instead of the
+prompt.
+
+Estimated size of one real catalog (483 skills and 86 agents, bytes / 4):
+
+| | Descriptions only | Full definitions |
+|---|---|---|
+| Skills | about 32k tokens | about 1.07M tokens |
+| Agents | about 4k tokens | about 132k tokens |
+
+Loading it all is impossible, since the full definitions are far beyond any context window,
+and even the descriptions alone would take 32k tokens per session. With FSR the whole
+catalog stays reachable: each request pays for at most three named matches, and only strong
+hits bring in the full `SKILL.md`.
+
+- **Scale without a ceiling.** Hundreds of skills and agents stay searchable instead of
+  being capped by what fits in the prompt.
+- **Fast.** The lookup takes about 1 to 4 ms and needs no model call and no network, so it
+  adds no perceptible delay to a prompt.
+- **Deterministic and local.** The same request returns the same shortlist, offline.
+
 ```
  source root            registry (state dir)                 client
  skills/<name>/  -->  discover -> submit -> publish  -->  search / load / resource
